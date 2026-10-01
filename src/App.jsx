@@ -8,23 +8,26 @@ import {
   Plus, 
   RotateCcw,
   CheckCircle,
-  Clock
+  Clock,
+  Settings,
+  BookOpen
 } from 'lucide-react';
 
 import { api } from './services/api';
 import { neighborhoods } from './data/initialData';
-import AccessibilityBar from './components/AccessibilityBar';
 import CategorySection from './components/CategorySection';
 import ProductModal from './components/ProductModal';
 import ProductEditModal from './components/ProductEditModal';
 import OrderSummary from './components/OrderSummary';
+import MotoboyManager from './components/MotoboyManager';
+import TechnicalManualTab from './components/TechnicalManualTab';
 
 export default function App() {
-  // Ajustes de Visualizacao e Acessibilidade (posicionados discretamente no cabecalho)
+  // Ajustes de Visualizacao e Acessibilidade (controlados na aba de Configuracoes e Manual)
   const [fontSize, setFontSize] = useState('normal'); // 'normal' | 'large' | 'xlarge'
   const [highContrast, setHighContrast] = useState(false);
 
-  // Navegacao: Cardapio sozinho ou Pedidos com comanda ao lado
+  // Navegacao
   const [activeTab, setActiveTab] = useState('cardapio');
   const [deliveryTime, setDeliveryTime] = useState('40 min');
   const [dashPeriod, setDashPeriod] = useState('hoje');
@@ -32,6 +35,7 @@ export default function App() {
   // Estado dos dados (persistidos via camada de API)
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
+  const [motoboys, setMotoboys] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Modais
@@ -60,12 +64,14 @@ export default function App() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [cats, prods] = await Promise.all([
+        const [cats, prods, mb] = await Promise.all([
           api.getCategories(),
-          api.getProducts()
+          api.getProducts(),
+          api.getMotoboys()
         ]);
         setCategories(cats);
         setProducts(prods);
+        setMotoboys(mb);
       } catch (err) {
         console.error('Erro ao carregar dados:', err);
       } finally {
@@ -123,7 +129,7 @@ export default function App() {
     }
   };
 
-  // 5. Salvar como Novo Prato (Variacao independente)
+  // 5. Salvar como Novo Prato
   const handleSaveAsNewProduct = async (newProductData) => {
     const updated = await api.createProduct(newProductData);
     setProducts(updated);
@@ -185,12 +191,33 @@ export default function App() {
     setTimeout(() => setOrderSuccess(false), 3500);
   };
 
+  // 11. Gestao de Motoboys
+  const handleAddMotoboy = async (motoboyData) => {
+    const updated = await api.createMotoboy(motoboyData);
+    setMotoboys(updated);
+    showFeedback(`Motoboy "${motoboyData.name}" cadastrado com sucesso.`);
+  };
+
+  const handleToggleMotoboy = async (id) => {
+    const updated = await api.toggleMotoboy(id);
+    setMotoboys(updated);
+    const m = updated.find(item => item.id === id);
+    showFeedback(m?.active ? `Motoboy "${m.name}" ativado na escala.` : `Motoboy "${m.name}" desativado.`);
+  };
+
+  const handleDeleteMotoboy = async (id) => {
+    const updated = await api.deleteMotoboy(id);
+    setMotoboys(updated);
+    showFeedback('Cadastro do motoboy excluido.');
+  };
+
   const handleResetDefaults = async () => {
     if (confirm('Confirma restaurar os dados originais do cardapio?')) {
       const data = await api.resetToDefaults();
       setCategories(data.categories);
       setProducts(data.products);
-      showFeedback('Cardapio restaurado para o padrao.');
+      setMotoboys(data.motoboys);
+      showFeedback('Dados restaurados para o padrao.');
     }
   };
 
@@ -205,24 +232,24 @@ export default function App() {
     <div className={`${fontSizeClass} ${highContrast ? 'high-contrast-mode' : ''}`} style={{ minHeight: '100vh', padding: '16px' }}>
       <div style={{ maxWidth: '1240px', margin: '0 auto' }}>
         
-        {/* CABECALHO SOBRIO COM ACESSIBILIDADE NO CANTO DESCRITIVO CORRETO */}
+        {/* CABECALHO LIMPO E PROFISSIONAL */}
         <header style={{
           background: '#ffffff',
           border: highContrast ? '2px solid #000000' : '1px solid #e2e8f0',
-          borderRadius: '10px',
-          padding: '16px 20px',
+          borderRadius: '8px',
+          padding: '14px 18px',
           display: 'flex',
           flexWrap: 'wrap',
           justifyContent: 'space-between',
           alignItems: 'center',
-          gap: '16px',
+          gap: '14px',
           marginBottom: '16px'
         }}>
-          {/* Identificacao da Lancheria */}
+          {/* Identificacao */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{
-              width: '40px',
-              height: '40px',
+              width: '38px',
+              height: '38px',
               borderRadius: '6px',
               background: '#0f172a',
               color: '#ffffff',
@@ -230,7 +257,7 @@ export default function App() {
               alignItems: 'center',
               justifyContent: 'center',
               fontWeight: '700',
-              fontSize: '14px',
+              fontSize: '13px',
               letterSpacing: '0.5px'
             }}>
               MM
@@ -238,7 +265,7 @@ export default function App() {
 
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <h1 style={{ fontSize: '1.25em', fontWeight: '700', color: '#0f172a' }}>
+                <h1 style={{ fontSize: '1.2em', fontWeight: '700', color: '#0f172a' }}>
                   Mau Mau Lanches
                 </h1>
                 <span style={{ 
@@ -258,22 +285,13 @@ export default function App() {
             </div>
           </div>
 
-          {/* Canto Direito: Acessibilidade Discreta + Tempo de Entrega */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-            {/* Campo de Acessibilidade Discreto no Canto */}
-            <AccessibilityBar 
-              fontSize={fontSize}
-              setFontSize={setFontSize}
-              highContrast={highContrast}
-              setHighContrast={setHighContrast}
-            />
-
-            {/* Tempo Medio de Espera */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingLeft: '8px', borderLeft: '1px solid #e2e8f0' }}>
-              <Clock size={16} color="#64748b" />
+          {/* Canto Direito: Tempo de Espera + Atalho para Configuracoes */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Clock size={15} color="#64748b" />
               <div style={{ textAlign: 'right' }}>
-                <span style={{ fontSize: '0.7em', color: '#64748b', display: 'block' }}>Tempo Estimado</span>
-                <span style={{ fontSize: '0.9em', fontWeight: '700', color: '#0f172a' }}>{deliveryTime}</span>
+                <span style={{ fontSize: '0.7em', color: '#64748b', display: 'block' }}>Tempo de Espera</span>
+                <span style={{ fontSize: '0.85em', fontWeight: '700', color: '#0f172a' }}>{deliveryTime}</span>
               </div>
               <button 
                 onClick={() => {
@@ -284,7 +302,7 @@ export default function App() {
                   background: '#f1f5f9', 
                   color: '#334155', 
                   border: '1px solid #cbd5e1', 
-                  padding: '4px 8px', 
+                  padding: '3px 8px', 
                   borderRadius: '4px',
                   fontSize: '0.75em',
                   fontWeight: '600'
@@ -293,10 +311,31 @@ export default function App() {
                 Editar
               </button>
             </div>
+
+            <button
+              onClick={() => setActiveTab('config')}
+              title="Abrir configuracoes e manual tecnico"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                fontSize: '0.8em',
+                fontWeight: '600',
+                background: activeTab === 'config' ? '#0f172a' : '#f8fafc',
+                color: activeTab === 'config' ? '#ffffff' : '#334155',
+                border: '1px solid #cbd5e1',
+                cursor: 'pointer'
+              }}
+            >
+              <Settings size={14} />
+              <span>Configuracoes e Manual</span>
+            </button>
           </div>
         </header>
 
-        {/* FEEDBACK VISUAL TOAST DISCRETO */}
+        {/* FEEDBACK VISUAL TOAST */}
         {notification && (
           <div style={{
             background: '#0f172a',
@@ -305,31 +344,32 @@ export default function App() {
             borderRadius: '6px',
             marginBottom: '14px',
             fontWeight: '600',
-            fontSize: '0.9em',
+            fontSize: '0.85em',
             display: 'flex',
             alignItems: 'center',
             gap: '8px'
           }}>
-            <CheckCircle size={16} color="#4ade80" />
+            <CheckCircle size={15} color="#4ade80" />
             <span>{notification}</span>
           </div>
         )}
 
-        {/* NAVEGACAO DE ABAS SOBRIA */}
+        {/* NAVEGACAO DE ABAS */}
         <nav style={{ 
           display: 'flex', 
           gap: '4px', 
-          marginBottom: '18px', 
+          marginBottom: '16px', 
           borderBottom: '1px solid #e2e8f0', 
           paddingBottom: '6px',
           overflowX: 'auto'
         }}>
           {[
-            { id: 'cardapio', label: 'Cardapio (Produtos e Ficha Tecnica)' },
+            { id: 'cardapio', label: 'Cardapio (Produtos e Ingredientes)' },
             { id: 'pedido', label: 'Nova Comanda / Pedido' },
-            { id: 'estoque', label: 'Estoque de Insumos' },
+            { id: 'estoque', label: 'Estoque e Limite de Vendas' },
             { id: 'motoboy', label: 'Acerto Motoboys' },
-            { id: 'caixa', label: 'Dashboard e Relatorios' }
+            { id: 'caixa', label: 'Dashboard e Relatorios' },
+            { id: 'config', label: 'Configuracoes e Manual Tecnico' }
           ].map(t => {
             const isActive = activeTab === t.id;
             return (
@@ -339,7 +379,7 @@ export default function App() {
                 style={{
                   padding: '8px 14px',
                   borderRadius: '6px',
-                  fontSize: '0.9em',
+                  fontSize: '0.85em',
                   fontWeight: isActive ? '700' : '500',
                   background: isActive ? '#0f172a' : 'transparent',
                   color: isActive ? '#ffffff' : '#64748b',
@@ -353,11 +393,10 @@ export default function App() {
         </nav>
 
         {/* ============================================================== */}
-        {/* 1. ABA DE CARDAPIO (SOZINHO, SEM COMANDA AO LADO)             */}
+        {/* 1. ABA DE CARDAPIO (SOZINHO EM LARGURA TOTAL)                  */}
         {/* ============================================================== */}
         {activeTab === 'cardapio' && (
           <div>
-            {/* Barra de Acoes do Cardapio */}
             <div style={{
               display: 'flex',
               justifyContent: 'space-between',
@@ -366,10 +405,10 @@ export default function App() {
             }}>
               <div>
                 <h2 style={{ fontSize: '1.2em', fontWeight: '700', color: '#0f172a' }}>
-                  Gestao de Cardapio e Ficha Tecnica
+                  Gestao de Cardapio e Ingredientes
                 </h2>
                 <p style={{ fontSize: '0.85em', color: '#64748b' }}>
-                  Visualize os ingredientes detalhados (pao, carne, queijo), ative/pause itens e crie novas variacoes.
+                  Estrutura de ingredientes (pao, carne, queijo), ativacao/pausa e criacao de novos pratos.
                 </p>
               </div>
 
@@ -416,7 +455,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* Lista das Categorias em Tela Inteira */}
+            {/* Secoes do Cardapio */}
             <div>
               {categories.map(cat => {
                 const catProducts = products.filter(p => p.catId === cat.id);
@@ -449,14 +488,13 @@ export default function App() {
         {activeTab === 'pedido' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(340px, 1fr)', gap: '20px', alignItems: 'start' }}>
             
-            {/* LADO ESQUERDO: SELECAO RAPIDA DE ITENS PARA O PEDIDO */}
             <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '18px' }}>
               <div style={{ marginBottom: '14px', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px' }}>
                 <h2 style={{ fontSize: '1.15em', fontWeight: '700', color: '#0f172a' }}>
-                  Selecione os Itens para o Pedido
+                  Itens Disponiveis para Pedido
                 </h2>
                 <p style={{ fontSize: '0.8em', color: '#64748b' }}>
-                  Clique em "Pedir" para personalizar os ingredientes ou adicionar diretamente.
+                  Clique em "Pedir" para personalizar os ingredientes ou adicionar direto a comanda.
                 </p>
               </div>
 
@@ -541,7 +579,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* LADO DIREITO: COMANDA ABERTA DO PEDIDO */}
+            {/* Comanda Aberta */}
             <OrderSummary
               orderItems={orderItems}
               onRemoveItem={handleRemoveItem}
@@ -642,33 +680,17 @@ export default function App() {
         )}
 
         {/* ============================================================== */}
-        {/* 4. ABA DE MOTOBOYS                                            */}
+        {/* 4. ABA DE MOTOBOYS (GESTAO COMPLETA E ACERTO)                 */}
         {/* ============================================================== */}
         {activeTab === 'motoboy' && (
-          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '20px' }}>
-            <h2 style={{ fontSize: '1.2em', fontWeight: '700', marginBottom: '4px' }}>Acerto dos Motoboys</h2>
-            <p style={{ fontSize: '0.85em', color: '#64748b', marginBottom: '16px' }}>
-              Diaria fixa da noite (R$ 40,00) somada a taxa integral dos bairros atendidos.
-            </p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
-              {[
-                { name: 'Cleber Ribeiro', base: 40, trips: 4, fees: 26 },
-                { name: 'Rodrigo Silveira', base: 40, trips: 3, fees: 21 }
-              ].map((m, idx) => (
-                <div key={idx} style={{ border: '1px solid #e2e8f0', borderRadius: '6px', padding: '14px', background: '#fafafa' }}>
-                  <h3 style={{ fontSize: '1em', fontWeight: '700', marginBottom: '8px' }}>{m.name}</h3>
-                  <div style={{ fontSize: '0.85em', color: '#475569', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <div>Diaria fixa: R$ {m.base.toFixed(2)}</div>
-                    <div>Viagens realizadas: {m.trips}</div>
-                    <div>Taxas acumuladas: R$ {m.fees.toFixed(2)}</div>
-                    <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid #e2e8f0', fontWeight: '700', fontSize: '1em', color: '#059669' }}>
-                      Total a pagar: R$ {(m.base + m.fees).toFixed(2)}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <MotoboyManager
+            motoboys={motoboys}
+            onAddMotoboy={handleAddMotoboy}
+            onToggleMotoboy={handleToggleMotoboy}
+            onDeleteMotoboy={handleDeleteMotoboy}
+            highContrast={highContrast}
+            fontSizeClass={fontSizeClass}
+          />
         )}
 
         {/* ============================================================== */}
@@ -727,7 +749,20 @@ export default function App() {
           </div>
         )}
 
-        {/* MODAL DE PERSONALIZACAO DE LANCHE */}
+        {/* ============================================================== */}
+        {/* 6. ABA DE CONFIGURACOES E MANUAL TECNICO                       */}
+        {/* ============================================================== */}
+        {activeTab === 'config' && (
+          <TechnicalManualTab
+            fontSize={fontSize}
+            setFontSize={setFontSize}
+            highContrast={highContrast}
+            setHighContrast={setHighContrast}
+            fontSizeClass={fontSizeClass}
+          />
+        )}
+
+        {/* MODAL DE PERSONALIZACAO DE LANCHE (IFOOD) */}
         {selectedProductForModal && (
           <ProductModal
             product={selectedProductForModal}

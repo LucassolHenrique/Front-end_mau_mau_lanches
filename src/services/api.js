@@ -1,27 +1,27 @@
-// Camada de serviço preparada para integrar com o backend Node.js / PostgreSQL da Sprint 2
-// Atualmente persiste no localStorage para salvar criações, edições e exclusões mesmo atualizando a tela.
-
-import { initialCategories, initialProducts, neighborhoods } from '../data/initialData';
+// Camada de servico com persistencia local e metodos REST assincronos
+import { initialCategories, initialProducts, initialMotoboys, neighborhoods } from '../data/initialData';
 
 const STORAGE_KEYS = {
   CATEGORIES: 'komanda_categories_v3',
   PRODUCTS: 'komanda_products_v3',
-  ORDERS: 'komanda_orders_v3'
+  ORDERS: 'komanda_orders_v3',
+  MOTOBOYS: 'komanda_motoboys_v3'
 };
 
-// Inicialização com dados padrão caso o localStorage esteja vazio
 function initStorage() {
   if (!localStorage.getItem(STORAGE_KEYS.CATEGORIES)) {
     localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(initialCategories));
   }
   if (!localStorage.getItem(STORAGE_KEYS.PRODUCTS)) {
-    // Adiciona campo de controle de estoque diário para cada produto
     const productsWithStock = initialProducts.map(p => ({
       ...p,
-      stockQuantity: p.isCombo ? 15 : (p.catId === 2 ? 10 : 20), // Ex: restam 10 lanches de carne
+      stockQuantity: p.stockQuantity ?? (p.isCombo ? 15 : (p.catId === 2 ? 10 : 20)),
       hasStockLimit: true
     }));
     localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(productsWithStock));
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.MOTOBOYS)) {
+    localStorage.setItem(STORAGE_KEYS.MOTOBOYS, JSON.stringify(initialMotoboys));
   }
 }
 
@@ -42,7 +42,7 @@ export const api = {
     return updated;
   },
 
-  // --- PRODUTOS (CRUD COMPLETO) ---
+  // --- PRODUTOS ---
   async getProducts() {
     initStorage();
     const data = localStorage.getItem(STORAGE_KEYS.PRODUCTS);
@@ -58,7 +58,7 @@ export const api = {
       price: parseFloat(newProductData.price) || 0,
       stockQuantity: parseInt(newProductData.stockQuantity, 10) || 10,
       hasStockLimit: newProductData.hasStockLimit ?? true,
-      ingredients: newProductData.ingredients || [],
+      ingredients: newProductData.ingredients || {},
       removableIngredients: newProductData.removableIngredients || [],
       additionals: newProductData.additionals || [
         { id: 'bacon', name: 'Bacon fatiado crocante', price: 5.00 },
@@ -108,7 +108,6 @@ export const api = {
     return updated;
   },
 
-  // Dá baixa no estoque ao concluir pedidos
   async decrementProductStock(orderItems) {
     const products = await api.getProducts();
     const updated = products.map(p => {
@@ -118,7 +117,7 @@ export const api = {
         return {
           ...p,
           stockQuantity: remaining,
-          active: remaining === 0 ? false : p.active // Desativa automaticamente se esgotar a carne/insumo!
+          active: remaining === 0 ? false : p.active
         };
       }
       return p;
@@ -127,14 +126,53 @@ export const api = {
     return updated;
   },
 
-  // Reset para dados de fábrica
+  // --- MOTOBOYS (GESTAO E ACERTO) ---
+  async getMotoboys() {
+    initStorage();
+    const data = localStorage.getItem(STORAGE_KEYS.MOTOBOYS);
+    return JSON.parse(data) || [];
+  },
+
+  async createMotoboy(motoboyData) {
+    const motoboys = await api.getMotoboys();
+    const newMotoboy = {
+      id: Date.now(),
+      name: motoboyData.name.trim(),
+      phone: motoboyData.phone ? motoboyData.phone.trim() : '',
+      baseFee: parseFloat(motoboyData.baseFee) || 40.00,
+      active: true,
+      deliveries: 0,
+      deliveryFeesTotal: 0.00
+    };
+    const updated = [newMotoboy, ...motoboys];
+    localStorage.setItem(STORAGE_KEYS.MOTOBOYS, JSON.stringify(updated));
+    return updated;
+  },
+
+  async toggleMotoboy(id) {
+    const motoboys = await api.getMotoboys();
+    const updated = motoboys.map(m => m.id === id ? { ...m, active: !m.active } : m);
+    localStorage.setItem(STORAGE_KEYS.MOTOBOYS, JSON.stringify(updated));
+    return updated;
+  },
+
+  async deleteMotoboy(id) {
+    const motoboys = await api.getMotoboys();
+    const updated = motoboys.filter(m => m.id !== id);
+    localStorage.setItem(STORAGE_KEYS.MOTOBOYS, JSON.stringify(updated));
+    return updated;
+  },
+
+  // Reset para padrao de fabrica
   async resetToDefaults() {
     localStorage.removeItem(STORAGE_KEYS.CATEGORIES);
     localStorage.removeItem(STORAGE_KEYS.PRODUCTS);
+    localStorage.removeItem(STORAGE_KEYS.MOTOBOYS);
     initStorage();
     return {
       categories: await api.getCategories(),
-      products: await api.getProducts()
+      products: await api.getProducts(),
+      motoboys: await api.getMotoboys()
     };
   }
 };

@@ -364,3 +364,9 @@ export const neighborhoods = [
   { name: 'Santa Rita', fee: 9.00 },
   { name: 'Jardim dos Lagos', fee: 8.00 }
 ];
+
+export const initialMotoboys = [
+  { id: 1, name: 'Cleber Ribeiro', baseFee: 40.00, phone: '(51) 98765-4321', active: true, deliveries: 4, deliveryFeesTotal: 26.00 },
+  { id: 2, name: 'Rodrigo Silveira', baseFee: 40.00, phone: '(51) 99123-4567', active: true, deliveries: 3, deliveryFeesTotal: 21.00 }
+];
+
