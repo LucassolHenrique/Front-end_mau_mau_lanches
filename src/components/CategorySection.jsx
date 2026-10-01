@@ -1,5 +1,5 @@
 import React from 'react';
-import { Eye, EyeOff, Sparkles, PlusCircle } from 'lucide-react';
+import { Eye, EyeOff, Plus } from 'lucide-react';
 import ProductCard from './ProductCard';
 
 export default function CategorySection({ 
@@ -22,15 +22,14 @@ export default function CategorySection({
       className={fontSizeClass}
       style={{
         background: '#ffffff',
-        borderRadius: '14px',
+        borderRadius: '10px',
         border: highContrast ? '2px solid #000000' : '1px solid #e2e8f0',
-        padding: '18px 20px',
-        marginBottom: '24px',
-        boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
-        opacity: isCategoryActive ? 1 : 0.75
+        padding: '18px',
+        marginBottom: '20px',
+        opacity: isCategoryActive ? 1 : 0.8
       }}
     >
-      {/* Cabeçalho da Seção */}
+      {/* Cabecalho da Categoria */}
       <div style={{
         display: 'flex',
         flexWrap: 'wrap',
@@ -39,46 +38,42 @@ export default function CategorySection({
         gap: '12px',
         paddingBottom: '12px',
         borderBottom: '1px solid #f1f5f9',
-        marginBottom: '16px'
+        marginBottom: '14px'
       }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <h2 style={{ 
-              fontSize: '1.25em', 
-              fontWeight: '800', 
-              color: '#0f172a',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
+              fontSize: '1.2em', 
+              fontWeight: '700', 
+              color: '#0f172a'
             }}>
               {category.name}
             </h2>
 
             {category.isCombo && (
               <span style={{
-                background: '#f43f5e',
+                background: '#e11d48',
                 color: '#ffffff',
-                padding: '2px 8px',
-                borderRadius: '6px',
-                fontSize: '0.75em',
-                fontWeight: '800',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px'
+                padding: '2px 6px',
+                borderRadius: '4px',
+                fontSize: '0.7em',
+                fontWeight: '700',
+                letterSpacing: '0.4px',
+                textTransform: 'uppercase'
               }}>
-                <Sparkles size={12} /> COMBOS
+                Combos
               </span>
             )}
 
             <span style={{
               fontSize: '0.75em',
-              fontWeight: '700',
-              padding: '2px 8px',
-              borderRadius: '6px',
-              background: isCategoryActive ? '#dcfce7' : '#fee2e2',
+              fontWeight: '600',
+              padding: '2px 6px',
+              borderRadius: '4px',
+              background: isCategoryActive ? '#f0fdf4' : '#fef2f2',
               color: isCategoryActive ? '#15803d' : '#b91c1c'
             }}>
-              {isCategoryActive ? 'SEÇÃO ATIVA' : 'SEÇÃO PAUSADA'}
+              {isCategoryActive ? 'Ativa' : 'Pausada'}
             </span>
           </div>
 
@@ -87,43 +82,41 @@ export default function CategorySection({
           </p>
         </div>
 
-        {/* Botões de Ação da Categoria */}
+        {/* Botoes de Acao da Secao */}
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          {/* Botão Adicionar Novo Prato Nesta Categoria */}
           <button
             onClick={() => onAddNewProduct(category.id)}
-            title={`Adicionar novo prato em ${category.name}`}
+            title={`Cadastrar novo prato em ${category.name}`}
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
-              padding: '8px 12px',
-              borderRadius: '8px',
-              fontWeight: '700',
-              fontSize: '0.85em',
+              gap: '4px',
+              padding: '6px 10px',
+              borderRadius: '6px',
+              fontWeight: '600',
+              fontSize: '0.8em',
               background: '#0f172a',
               color: '#ffffff',
-              border: highContrast ? '2px solid #facc15' : 'none',
+              border: 'none',
               cursor: 'pointer'
             }}
           >
-            <PlusCircle size={15} />
-            <span>+ Novo Lanche</span>
+            <Plus size={14} />
+            <span>Novo Item</span>
           </button>
 
-          {/* Botão Pausar / Ativar a Categoria Inteira */}
           <button
             onClick={() => onToggleCategory(category.id)}
-            title={isCategoryActive ? 'Pausar toda a categoria temporariamente' : 'Ativar toda a categoria'}
+            title={isCategoryActive ? 'Pausar toda a categoria' : 'Ativar toda a categoria'}
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
-              padding: '8px 12px',
-              borderRadius: '8px',
-              fontWeight: '700',
-              fontSize: '0.85em',
-              background: isCategoryActive ? '#f1f5f9' : '#15803d',
+              gap: '4px',
+              padding: '6px 10px',
+              borderRadius: '6px',
+              fontWeight: '600',
+              fontSize: '0.8em',
+              background: isCategoryActive ? '#f8fafc' : '#15803d',
               color: isCategoryActive ? '#475569' : '#ffffff',
               border: isCategoryActive ? '1px solid #cbd5e1' : 'none',
               cursor: 'pointer'
@@ -131,66 +124,49 @@ export default function CategorySection({
           >
             {isCategoryActive ? (
               <>
-                <EyeOff size={15} />
-                <span>Pausar Seção</span>
+                <EyeOff size={14} />
+                <span>Pausar Secao</span>
               </>
             ) : (
               <>
-                <Eye size={15} />
-                <span>Ativar Seção</span>
+                <Eye size={14} />
+                <span>Ativar Secao</span>
               </>
             )}
           </button>
         </div>
       </div>
 
-      {/* Conteúdo da Categoria */}
+      {/* Grid de Itens */}
       {!isCategoryActive ? (
         <div style={{
-          padding: '20px',
+          padding: '16px',
           background: '#f8fafc',
-          borderRadius: '8px',
+          borderRadius: '6px',
           border: '1px dashed #cbd5e1',
           textAlign: 'center',
-          color: '#64748b'
+          color: '#64748b',
+          fontSize: '0.9em'
         }}>
-          <p style={{ fontWeight: '700', fontSize: '1em', color: '#334155' }}>
-            Esta categoria está temporariamente pausada para vendas.
-          </p>
-          <p style={{ fontSize: '0.85em', marginTop: '2px' }}>
-            Clique em "Ativar Seção" acima para voltar a aceitar pedidos.
-          </p>
+          Categoria temporariamente pausada para vendas no balcao e entrega.
         </div>
       ) : products.length === 0 ? (
         <div style={{
-          padding: '24px',
+          padding: '16px',
           background: '#f8fafc',
-          borderRadius: '8px',
+          borderRadius: '6px',
           border: '1px dashed #cbd5e1',
           textAlign: 'center',
-          color: '#64748b'
+          color: '#64748b',
+          fontSize: '0.85em'
         }}>
-          <p style={{ fontWeight: '700', fontSize: '0.95em' }}>Nenhum prato cadastrado nesta seção.</p>
-          <button
-            onClick={() => onAddNewProduct(category.id)}
-            style={{
-              marginTop: '8px',
-              background: '#0f172a',
-              color: '#fff',
-              padding: '6px 12px',
-              borderRadius: '6px',
-              fontSize: '0.85em',
-              fontWeight: '700'
-            }}
-          >
-            + Criar o primeiro prato
-          </button>
+          Nenhum prato cadastrado nesta secao.
         </div>
       ) : (
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-          gap: '16px'
+          gap: '14px'
         }}>
           {products.map(prod => (
             <ProductCard

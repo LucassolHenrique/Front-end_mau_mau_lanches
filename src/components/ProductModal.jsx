@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { X, Plus, Minus, Check, AlertCircle } from 'lucide-react';
+import { X, Plus, Minus } from 'lucide-react';
+import ProductCompositionView from './ProductCompositionView';
 
 export default function ProductModal({ 
   product, 
@@ -15,7 +16,6 @@ export default function ProductModal({
 
   if (!product) return null;
 
-  // Toggle remoção de ingrediente
   const toggleRemove = (ing) => {
     if (removedIngredients.includes(ing)) {
       setRemovedIngredients(removedIngredients.filter(i => i !== ing));
@@ -24,7 +24,6 @@ export default function ProductModal({
     }
   };
 
-  // Toggle adicional
   const toggleAdditional = (add) => {
     const exists = selectedAdditionals.find(a => a.id === add.id);
     if (exists) {
@@ -34,7 +33,6 @@ export default function ProductModal({
     }
   };
 
-  // Cálculo do valor unitário com adicionais
   const additionalsTotal = selectedAdditionals.reduce((acc, curr) => acc + curr.price, 0);
   const unitPrice = product.price + additionalsTotal;
   const totalPrice = unitPrice * quantity;
@@ -58,13 +56,12 @@ export default function ProductModal({
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.75)',
+        backgroundColor: 'rgba(0, 0, 0, 0.65)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 9999,
-        padding: '16px',
-        backdropFilter: 'blur(3px)'
+        padding: '16px'
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -73,21 +70,21 @@ export default function ProductModal({
       <div 
         className={fontSizeClass}
         style={{
-          background: highContrast ? '#ffffff' : '#ffffff',
+          background: '#ffffff',
           color: '#0f172a',
-          borderRadius: '16px',
+          borderRadius: '12px',
           width: '100%',
-          maxWidth: '580px',
+          maxWidth: '560px',
           maxHeight: '92vh',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
-          border: highContrast ? '3px solid #000000' : '1px solid #cbd5e1'
+          boxShadow: '0 20px 40px rgba(0,0,0,0.25)',
+          border: highContrast ? '2px solid #000000' : '1px solid #cbd5e1'
         }}
       >
-        {/* Topo com Foto e Botão Fechar */}
-        <div style={{ position: 'relative', width: '100%', height: '180px', backgroundColor: '#e2e8f0' }}>
+        {/* Topo com Foto e Botao Fechar */}
+        <div style={{ position: 'relative', width: '100%', height: '160px', backgroundColor: '#e2e8f0' }}>
           <img 
             src={product.image} 
             alt={product.name}
@@ -95,77 +92,58 @@ export default function ProductModal({
           />
           <button
             onClick={onClose}
-            aria-label="Fechar janela"
+            aria-label="Fechar"
             style={{
               position: 'absolute',
-              top: '12px',
-              right: '12px',
-              background: 'rgba(0, 0, 0, 0.7)',
+              top: '10px',
+              right: '10px',
+              background: 'rgba(15, 23, 42, 0.8)',
               color: '#ffffff',
               borderRadius: '50%',
-              width: '38px',
-              height: '38px',
+              width: '32px',
+              height: '32px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              border: '2px solid #ffffff'
+              justifyContent: 'center'
             }}
           >
-            <X size={20} />
+            <X size={18} />
           </button>
-
-          {product.isCombo && (
-            <span style={{
-              position: 'absolute',
-              bottom: '12px',
-              left: '12px',
-              background: '#e11d48',
-              color: '#ffffff',
-              padding: '4px 10px',
-              borderRadius: '6px',
-              fontWeight: '700',
-              fontSize: '12px',
-              letterSpacing: '0.5px'
-            }}>
-              ★ COMBO PROMOCIONAL
-            </span>
-          )}
         </div>
 
-        {/* Corpo rolável */}
-        <div style={{ padding: '20px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '18px' }}>
-          {/* Título e Preço */}
+        {/* Corpo */}
+        <div style={{ padding: '18px 20px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div>
-            <h2 style={{ fontSize: '1.4em', fontWeight: '800', color: '#0f172a', lineHeight: '1.2' }}>
+            <h2 style={{ fontSize: '1.3em', fontWeight: '700', color: '#0f172a' }}>
               {product.name}
             </h2>
-            <p style={{ fontSize: '0.95em', color: '#475569', marginTop: '6px', lineHeight: '1.4' }}>
+            <p style={{ fontSize: '0.9em', color: '#64748b', marginTop: '4px' }}>
               {product.desc}
             </p>
-            <div style={{ fontSize: '1.3em', fontWeight: '800', color: highContrast ? '#000000' : '#059669', marginTop: '8px' }}>
-              Preço base: R$ {product.price.toFixed(2)}
+            <div style={{ fontSize: '1.2em', fontWeight: '800', color: '#059669', marginTop: '6px' }}>
+              Preco base: R$ {product.price.toFixed(2)}
             </div>
+
+            {/* Composicao detalhada do lanche (pao, carne, queijo, etc.) */}
+            <ProductCompositionView composition={product.composition} />
           </div>
 
-          {/* 1. SEÇÃO DE RETIRAR INGREDIENTES */}
+          {/* Retirar Ingredientes */}
           {product.removableIngredients && product.removableIngredients.length > 0 && (
             <div style={{
-              background: highContrast ? '#f8fafc' : '#f8fafc',
+              background: '#f8fafc',
               border: '1px solid #e2e8f0',
-              borderRadius: '10px',
-              padding: '14px'
+              borderRadius: '8px',
+              padding: '12px'
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontWeight: '700', fontSize: '1.05em', color: '#0f172a' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <span style={{ fontWeight: '700', fontSize: '0.95em', color: '#0f172a' }}>
                   Retirar algum ingrediente?
                 </span>
-                <span style={{ fontSize: '0.85em', color: '#64748b' }}>Opcional (Gratuito)</span>
+                <span style={{ fontSize: '0.8em', color: '#64748b' }}>Opcional (Sem custo)</span>
               </div>
-              <p style={{ fontSize: '0.85em', color: '#64748b', marginBottom: '10px' }}>
-                Marque abaixo o que o cliente NÃO quer no lanche:
-              </p>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {product.removableIngredients.map((item) => {
                   const isChecked = removedIngredients.includes(item);
                   return (
@@ -175,22 +153,21 @@ export default function ProductModal({
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '10px 12px',
-                        borderRadius: '8px',
+                        padding: '8px 10px',
+                        borderRadius: '6px',
                         cursor: 'pointer',
-                        background: isChecked ? '#fee2e2' : '#ffffff',
-                        border: isChecked ? '2px solid #ef4444' : '1px solid #cbd5e1',
-                        transition: 'all 0.15s ease'
+                        background: isChecked ? '#fef2f2' : '#ffffff',
+                        border: isChecked ? '1px solid #f87171' : '1px solid #cbd5e1'
                       }}
                     >
-                      <span style={{ fontWeight: isChecked ? '700' : '500', color: isChecked ? '#b91c1c' : '#1e293b' }}>
+                      <span style={{ fontSize: '0.9em', fontWeight: isChecked ? '700' : '500', color: isChecked ? '#b91c1c' : '#1e293b' }}>
                         {item}
                       </span>
                       <input 
                         type="checkbox"
                         checked={isChecked}
                         onChange={() => toggleRemove(item)}
-                        style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                        style={{ width: '18px', height: '18px' }}
                       />
                     </label>
                   );
@@ -199,25 +176,22 @@ export default function ProductModal({
             </div>
           )}
 
-          {/* 2. SEÇÃO DE ADICIONAIS PAGOS */}
+          {/* Adicionais Pagos */}
           {product.additionals && product.additionals.length > 0 && (
             <div style={{
               background: '#f8fafc',
               border: '1px solid #e2e8f0',
-              borderRadius: '10px',
-              padding: '14px'
+              borderRadius: '8px',
+              padding: '12px'
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontWeight: '700', fontSize: '1.05em', color: '#0f172a' }}>
-                  Turbine seu lanche (Adicionais)
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <span style={{ fontWeight: '700', fontSize: '0.95em', color: '#0f172a' }}>
+                  Adicionais
                 </span>
-                <span style={{ fontSize: '0.85em', color: '#059669', fontWeight: '600' }}>Com acréscimo</span>
+                <span style={{ fontSize: '0.8em', color: '#059669', fontWeight: '600' }}>Opcional</span>
               </div>
-              <p style={{ fontSize: '0.85em', color: '#64748b', marginBottom: '10px' }}>
-                Escolha adicionais para somar ao valor do lanche:
-              </p>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {product.additionals.map((add) => {
                   const isChecked = selectedAdditionals.some(a => a.id === add.id);
                   return (
@@ -227,19 +201,18 @@ export default function ProductModal({
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '10px 12px',
-                        borderRadius: '8px',
+                        padding: '8px 10px',
+                        borderRadius: '6px',
                         cursor: 'pointer',
-                        background: isChecked ? '#dcfce7' : '#ffffff',
-                        border: isChecked ? '2px solid #16a34a' : '1px solid #cbd5e1',
-                        transition: 'all 0.15s ease'
+                        background: isChecked ? '#f0fdf4' : '#ffffff',
+                        border: isChecked ? '1px solid #86efac' : '1px solid #cbd5e1'
                       }}
                     >
                       <div>
-                        <span style={{ fontWeight: isChecked ? '700' : '500', color: '#1e293b' }}>
+                        <span style={{ fontSize: '0.9em', fontWeight: isChecked ? '700' : '500', color: '#1e293b' }}>
                           + {add.name}
                         </span>
-                        <span style={{ display: 'block', fontSize: '0.85em', color: '#059669', fontWeight: '700', marginTop: '2px' }}>
+                        <span style={{ display: 'block', fontSize: '0.8em', color: '#059669', fontWeight: '600' }}>
                           + R$ {add.price.toFixed(2)}
                         </span>
                       </div>
@@ -247,7 +220,7 @@ export default function ProductModal({
                         type="checkbox"
                         checked={isChecked}
                         onChange={() => toggleAdditional(add)}
-                        style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                        style={{ width: '18px', height: '18px' }}
                       />
                     </label>
                   );
@@ -256,108 +229,72 @@ export default function ProductModal({
             </div>
           )}
 
-          {/* 3. OBSERVAÇÕES PARA A COZINHA */}
+          {/* Observacao para a Cozinha */}
           <div>
-            <label style={{ display: 'block', fontWeight: '700', fontSize: '1em', color: '#0f172a', marginBottom: '6px' }}>
-              Observações do cliente para a cozinha:
+            <label style={{ display: 'block', fontWeight: '600', fontSize: '0.9em', color: '#334155', marginBottom: '4px' }}>
+              Observacao para a cozinha:
             </label>
             <textarea
               rows={2}
-              placeholder="Ex: Pão bem tostado na chapa, cortar o lanche ao meio, maionese à parte..."
+              placeholder="Ex: Pao bem tostado, cortar ao meio, maionese a parte..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '10px',
-                borderRadius: '8px',
-                border: '1px solid #cbd5e1',
-                fontSize: '0.95em',
-                resize: 'none'
-              }}
+              style={{ width: '100%', padding: '8px 10px', fontSize: '0.9em', resize: 'none' }}
             />
           </div>
         </div>
 
-        {/* Rodapé com Contador e Botão Grande de Adicionar */}
+        {/* Rodape de Confirmacao */}
         <div style={{
-          padding: '16px 20px',
+          padding: '14px 20px',
           borderTop: '1px solid #e2e8f0',
           background: '#ffffff',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: '16px'
+          gap: '14px'
         }}>
-          {/* Seletor de Quantidade */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            border: '2px solid #0f172a',
-            borderRadius: '8px',
-            overflow: 'hidden'
-          }}>
+          {/* Contador */}
+          <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #cbd5e1', borderRadius: '6px' }}>
             <button
               onClick={() => setQuantity(Math.max(1, quantity - 1))}
-              aria-label="Diminuir quantidade"
-              style={{
-                background: '#f1f5f9',
-                padding: '10px 14px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#0f172a'
-              }}
+              style={{ background: '#f8fafc', padding: '8px 12px', color: '#0f172a' }}
             >
-              <Minus size={18} />
+              <Minus size={15} />
             </button>
-            <span style={{
-              padding: '10px 16px',
-              fontWeight: '800',
-              fontSize: '1.1em',
-              minWidth: '40px',
-              textAlign: 'center'
-            }}>
+            <span style={{ padding: '8px 14px', fontWeight: '700', fontSize: '1em', minWidth: '35px', textAlign: 'center' }}>
               {quantity}
             </span>
             <button
               onClick={() => setQuantity(quantity + 1)}
-              aria-label="Aumentar quantidade"
-              style={{
-                background: '#f1f5f9',
-                padding: '10px 14px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#0f172a'
-              }}
+              style={{ background: '#f8fafc', padding: '8px 12px', color: '#0f172a' }}
             >
-              <Plus size={18} />
+              <Plus size={15} />
             </button>
           </div>
 
-          {/* Botão de Adicionar ao Pedido */}
+          {/* Botao de Adicionar */}
           <button
             onClick={handleConfirm}
             style={{
               flex: 1,
-              background: highContrast ? '#000000' : '#0f172a',
+              background: '#0f172a',
               color: '#ffffff',
-              padding: '14px 20px',
-              borderRadius: '8px',
+              padding: '12px 18px',
+              borderRadius: '6px',
               fontWeight: '700',
-              fontSize: '1.05em',
+              fontSize: '0.95em',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '10px',
-              border: highContrast ? '2px solid #facc15' : 'none',
-              cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+              gap: '8px',
+              border: 'none',
+              cursor: 'pointer'
             }}
           >
             <span>Adicionar ao Pedido</span>
             <span>•</span>
-            <span style={{ color: highContrast ? '#facc15' : '#4ade80' }}>
+            <span style={{ color: '#4ade80' }}>
               R$ {totalPrice.toFixed(2)}
             </span>
           </button>

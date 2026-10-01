@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, PlusCircle, Trash2, AlertTriangle, Layers } from 'lucide-react';
+import { X, Save, Layers, Trash2 } from 'lucide-react';
 
 export default function ProductEditModal({ 
   product, 
@@ -22,6 +22,15 @@ export default function ProductEditModal({
   const [image, setImage] = useState('');
   const [removableText, setRemovableText] = useState('');
 
+  // Partes estruturadas da comida
+  const [pao, setPao] = useState('');
+  const [carne, setCarne] = useState('');
+  const [queijo, setQueijo] = useState('');
+  const [frios, setFrios] = useState('');
+  const [salada, setSalada] = useState('');
+  const [molho, setMolho] = useState('');
+  const [acompanhamento, setAcompanhamento] = useState('');
+
   useEffect(() => {
     if (product) {
       setName(product.name || '');
@@ -32,6 +41,15 @@ export default function ProductEditModal({
       setHasStockLimit(product.hasStockLimit ?? true);
       setImage(product.image || '');
       setRemovableText(product.removableIngredients ? product.removableIngredients.join(', ') : '');
+      
+      const comp = product.composition || {};
+      setPao(comp.pao || '');
+      setCarne(comp.carne || '');
+      setQueijo(comp.queijo || '');
+      setFrios(comp.frios || '');
+      setSalada(comp.salada || '');
+      setMolho(comp.molho || '');
+      setAcompanhamento(comp.acompanhamento || '');
     } else {
       setName('');
       setCatId(categories[0]?.id || 2);
@@ -41,13 +59,30 @@ export default function ProductEditModal({
       setHasStockLimit(true);
       setImage('https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80');
       setRemovableText('Sem Tomate, Sem Alface, Sem Maionese');
+      setPao('Pao de Xis Tradicional');
+      setCarne('Hamburguer Bovino 200g');
+      setQueijo('Queijo Prato');
+      setFrios('Presunto');
+      setSalada('Alface e Tomate');
+      setMolho('Maionese da Casa');
+      setAcompanhamento('');
     }
   }, [product, categories]);
 
+  const getCompositionPayload = () => ({
+    pao: pao.trim(),
+    carne: carne.trim(),
+    queijo: queijo.trim(),
+    frios: frios.trim(),
+    salada: salada.trim(),
+    molho: molho.trim(),
+    acompanhamento: acompanhamento.trim()
+  });
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!name.trim()) return alert('Por favor, informe o nome do prato/lanche.');
-    if (!price || parseFloat(price) <= 0) return alert('Informe um preço válido.');
+    if (!name.trim()) return alert('Informe o nome do item.');
+    if (!price || parseFloat(price) <= 0) return alert('Informe um preco valido.');
 
     const removableIngredients = removableText
       .split(',')
@@ -63,14 +98,15 @@ export default function ProductEditModal({
       stockQuantity: hasStockLimit ? Math.max(0, parseInt(stockQuantity, 10) || 0) : 9999,
       hasStockLimit,
       image: image.trim() || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80',
-      removableIngredients
+      removableIngredients,
+      composition: getCompositionPayload()
     };
 
     onSave(productPayload);
   };
 
   const handleSaveAsNewClick = () => {
-    if (!name.trim()) return alert('Informe o nome para o novo prato.');
+    if (!name.trim()) return alert('Informe o nome para o novo item.');
     const removableIngredients = removableText
       .split(',')
       .map(s => s.trim())
@@ -85,7 +121,8 @@ export default function ProductEditModal({
       stockQuantity: hasStockLimit ? Math.max(0, parseInt(stockQuantity, 10) || 0) : 9999,
       hasStockLimit,
       image: image.trim(),
-      removableIngredients
+      removableIngredients,
+      composition: getCompositionPayload()
     };
 
     onSaveAsNew(newProductPayload);
@@ -96,13 +133,12 @@ export default function ProductEditModal({
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.75)',
+        backgroundColor: 'rgba(0, 0, 0, 0.65)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 10000,
-        padding: '16px',
-        backdropFilter: 'blur(3px)'
+        padding: '16px'
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -113,29 +149,34 @@ export default function ProductEditModal({
         style={{
           background: '#ffffff',
           color: '#0f172a',
-          borderRadius: '16px',
+          borderRadius: '12px',
           width: '100%',
-          maxWidth: '560px',
-          maxHeight: '92vh',
+          maxWidth: '640px',
+          maxHeight: '94vh',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          boxShadow: '0 25px 50px rgba(0,0,0,0.3)',
-          border: highContrast ? '3px solid #000000' : '1px solid #cbd5e1'
+          boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+          border: highContrast ? '2px solid #000000' : '1px solid #cbd5e1'
         }}
       >
-        {/* Cabeçalho do Modal */}
+        {/* Cabecalho Limpo e Sobrio */}
         <div style={{
           padding: '16px 20px',
           background: highContrast ? '#000000' : '#0f172a',
-          color: highContrast ? '#facc15' : '#ffffff',
+          color: '#ffffff',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center'
         }}>
-          <h2 style={{ fontSize: '1.25em', fontWeight: '800' }}>
-            {isCreating ? '➕ Adicionar Novo Prato ao Cardápio' : `✏️ Editar: ${product?.name}`}
-          </h2>
+          <div>
+            <span style={{ fontSize: '0.8em', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Ficha Tecnica e Cadastro
+            </span>
+            <h2 style={{ fontSize: '1.2em', fontWeight: '700', marginTop: '2px' }}>
+              {isCreating ? 'Novo Item do Cardapio' : `Editar: ${product?.name}`}
+            </h2>
+          </div>
           <button
             onClick={onClose}
             aria-label="Fechar"
@@ -147,215 +188,234 @@ export default function ProductEditModal({
               justifyContent: 'center'
             }}
           >
-            <X size={24} />
+            <X size={20} />
           </button>
         </div>
 
-        {/* Formulário com Campos Claros e Grandes */}
+        {/* Formulario */}
         <form onSubmit={handleSubmit} style={{ padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           
-          {/* Nome do Prato */}
-          <div>
-            <label style={{ display: 'block', fontWeight: '700', marginBottom: '6px', fontSize: '1em' }}>
-              Nome do Prato / Lanche:
-            </label>
-            <input 
-              type="text"
-              required
-              placeholder="Ex: Xis Coração sem Bacon, Hambúrguer Artesanal..."
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              style={{ width: '100%', padding: '10px 12px', fontSize: '1.05em', fontWeight: '600' }}
-            />
-          </div>
-
-          {/* Categoria e Preço lado a lado */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px' }}>
+          {/* Dados Gerais: Nome, Categoria, Preco */}
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px' }}>
             <div>
-              <label style={{ display: 'block', fontWeight: '700', marginBottom: '6px', fontSize: '0.95em' }}>
-                Categoria:
+              <label style={{ display: 'block', fontWeight: '600', marginBottom: '4px', fontSize: '0.9em' }}>
+                Nome do Item:
               </label>
-              <select
-                value={catId}
-                onChange={(e) => setCatId(Number(e.target.value))}
-                style={{ width: '100%', padding: '10px', fontSize: '0.95em', fontWeight: '600' }}
-              >
-                {categories.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+              <input 
+                type="text"
+                required
+                placeholder="Ex: Xis Coracao sem Bacon"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                style={{ width: '100%', padding: '8px 10px', fontSize: '1em' }}
+              />
             </div>
 
             <div>
-              <label style={{ display: 'block', fontWeight: '700', marginBottom: '6px', fontSize: '0.95em' }}>
-                Preço de Venda (R$):
+              <label style={{ display: 'block', fontWeight: '600', marginBottom: '4px', fontSize: '0.9em' }}>
+                Preco (R$):
               </label>
               <input 
                 type="number"
                 step="0.50"
                 min="0"
                 required
-                placeholder="Ex: 28.00"
+                placeholder="28.00"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                style={{ width: '100%', padding: '10px', fontSize: '1.05em', fontWeight: '700', color: '#059669' }}
+                style={{ width: '100%', padding: '8px 10px', fontSize: '1em', fontWeight: '700' }}
               />
             </div>
           </div>
 
-          {/* Ingredientes e Descrição */}
           <div>
-            <label style={{ display: 'block', fontWeight: '700', marginBottom: '6px', fontSize: '0.95em' }}>
-              Descrição dos Ingredientes (O que vai no lanche):
+            <label style={{ display: 'block', fontWeight: '600', marginBottom: '4px', fontSize: '0.9em' }}>
+              Categoria:
             </label>
-            <textarea 
-              rows={2}
-              placeholder="Ex: Pão prensado, coração de frango no alho, queijo duplo e maionese"
-              value={desc}
-              onChange={(e) => setDesc(e.target.value)}
-              style={{ width: '100%', padding: '10px', fontSize: '0.95em' }}
-            />
+            <select
+              value={catId}
+              onChange={(e) => setCatId(Number(e.target.value))}
+              style={{ width: '100%', padding: '8px 10px' }}
+            >
+              {categories.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
           </div>
 
-          {/* Opções de Retirada de Ingredientes */}
+          {/* COMPOSICAO DA COMIDA EM COMPONENTES INDIVIDUAIS (PAO, CARNE, QUEIJO, ETC) */}
+          <div style={{
+            background: '#f8fafc',
+            border: '1px solid #e2e8f0',
+            borderRadius: '8px',
+            padding: '14px'
+          }}>
+            <span style={{ display: 'block', fontWeight: '700', fontSize: '0.95em', color: '#0f172a', marginBottom: '4px' }}>
+              Composicao da Comida (Ficha Tecnica por Componentes)
+            </span>
+            <span style={{ display: 'block', fontSize: '0.8em', color: '#64748b', marginBottom: '12px' }}>
+              Defina cada parte do lanche de forma estruturada:
+            </span>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8em', fontWeight: '600', color: '#475569', marginBottom: '2px' }}>
+                  1. Pao:
+                </label>
+                <input 
+                  type="text" 
+                  placeholder="Ex: Pao de Xis Tradicional" 
+                  value={pao} 
+                  onChange={(e) => setPao(e.target.value)}
+                  style={{ width: '100%', padding: '6px 8px', fontSize: '0.9em' }} 
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8em', fontWeight: '600', color: '#475569', marginBottom: '2px' }}>
+                  2. Carne / Proteina:
+                </label>
+                <input 
+                  type="text" 
+                  placeholder="Ex: Hamburguer Bovino 200g, Coracao" 
+                  value={carne} 
+                  onChange={(e) => setCarne(e.target.value)}
+                  style={{ width: '100%', padding: '6px 8px', fontSize: '0.9em' }} 
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8em', fontWeight: '600', color: '#475569', marginBottom: '2px' }}>
+                  3. Queijo / Laticinio:
+                </label>
+                <input 
+                  type="text" 
+                  placeholder="Ex: Queijo Prato Duplo, Cheddar" 
+                  value={queijo} 
+                  onChange={(e) => setQueijo(e.target.value)}
+                  style={{ width: '100%', padding: '6px 8px', fontSize: '0.9em' }} 
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8em', fontWeight: '600', color: '#475569', marginBottom: '2px' }}>
+                  4. Frios e Embutidos:
+                </label>
+                <input 
+                  type="text" 
+                  placeholder="Ex: Bacon Fatiado, Presunto" 
+                  value={frios} 
+                  onChange={(e) => setFrios(e.target.value)}
+                  style={{ width: '100%', padding: '6px 8px', fontSize: '0.9em' }} 
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8em', fontWeight: '600', color: '#475569', marginBottom: '2px' }}>
+                  5. Salada / Vegetais:
+                </label>
+                <input 
+                  type="text" 
+                  placeholder="Ex: Alface, Tomate, Milho" 
+                  value={salada} 
+                  onChange={(e) => setSalada(e.target.value)}
+                  style={{ width: '100%', padding: '6px 8px', fontSize: '0.9em' }} 
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8em', fontWeight: '600', color: '#475569', marginBottom: '2px' }}>
+                  6. Molhos:
+                </label>
+                <input 
+                  type="text" 
+                  placeholder="Ex: Maionese Temperada da Casa" 
+                  value={molho} 
+                  onChange={(e) => setMolho(e.target.value)}
+                  style={{ width: '100%', padding: '6px 8px', fontSize: '0.9em' }} 
+                />
+              </div>
+            </div>
+
+            <div style={{ marginTop: '10px' }}>
+              <label style={{ display: 'block', fontSize: '0.8em', fontWeight: '600', color: '#475569', marginBottom: '2px' }}>
+                7. Acompanhamento / Adicionais Inclusos:
+              </label>
+              <input 
+                type="text" 
+                placeholder="Ex: Batata Frita 200g e Refrigerante Lata (em combos)" 
+                value={acompanhamento} 
+                onChange={(e) => setAcompanhamento(e.target.value)}
+                style={{ width: '100%', padding: '6px 8px', fontSize: '0.9em' }} 
+              />
+            </div>
+          </div>
+
+          {/* Opcoes de Retirada */}
           <div>
-            <label style={{ display: 'block', fontWeight: '700', marginBottom: '4px', fontSize: '0.95em' }}>
-              Opções que o cliente pode pedir para RETIRAR:
+            <label style={{ display: 'block', fontWeight: '600', marginBottom: '2px', fontSize: '0.9em' }}>
+              Opcoes para Retirada no Pedido:
             </label>
-            <span style={{ fontSize: '0.85em', color: '#64748b', display: 'block', marginBottom: '6px' }}>
-              Separe por vírgula (Ex: Sem Tomate, Sem Bacon, Sem Maionese)
+            <span style={{ fontSize: '0.8em', color: '#64748b', display: 'block', marginBottom: '6px' }}>
+              Valores separados por virgula (ex: Sem Tomate, Sem Bacon, Sem Maionese)
             </span>
             <input 
               type="text"
-              placeholder="Ex: Sem Tomate, Sem Alface, Sem Maionese"
+              placeholder="Ex: Sem Tomate, Sem Bacon, Sem Maionese"
               value={removableText}
               onChange={(e) => setRemovableText(e.target.value)}
-              style={{ width: '100%', padding: '10px', fontSize: '0.95em' }}
+              style={{ width: '100%', padding: '8px 10px' }}
             />
           </div>
 
-          {/* CONTROLE DE ESTOQUE / LIMITE DE VENDAS DIÁRIAS (ex: carne acabou) */}
+          {/* Controle de Estoque da Noite */}
           <div style={{
-            background: '#f8fafc',
-            border: '2px solid #e2e8f0',
-            borderRadius: '10px',
-            padding: '14px'
+            background: '#ffffff',
+            border: '1px solid #cbd5e1',
+            borderRadius: '8px',
+            padding: '12px'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <span style={{ fontWeight: '800', fontSize: '1em', color: '#0f172a' }}>
-                🥩 Controle de Limite de Vendas (Estoque da Noite)
-              </span>
-            </div>
-            
-            <p style={{ fontSize: '0.85em', color: '#475569', marginBottom: '10px' }}>
-              Se a carne ou o insumo acabar, o sistema bloqueia os pedidos deste item automaticamente.
-            </p>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <label style={{ fontSize: '0.9em', fontWeight: '700', color: '#334155' }}>
-                Unidades disponíveis para venda hoje:
-              </label>
-              <input 
-                type="number"
-                min="0"
-                value={stockQuantity}
-                onChange={(e) => setStockQuantity(e.target.value)}
-                style={{ width: '90px', padding: '8px', fontSize: '1.1em', fontWeight: '800', textAlign: 'center' }}
-              />
-              <span style={{ fontSize: '0.85em', color: '#64748b' }}>porções restantes</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <span style={{ display: 'block', fontWeight: '600', fontSize: '0.9em', color: '#0f172a' }}>
+                  Limite de Vendas por Estoque Disponivel
+                </span>
+                <span style={{ fontSize: '0.8em', color: '#64748b' }}>
+                  Quantidade de porcoes de carne/lanche disponiveis para a noite
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <input 
+                  type="number"
+                  min="0"
+                  value={stockQuantity}
+                  onChange={(e) => setStockQuantity(e.target.value)}
+                  style={{ width: '80px', padding: '6px', textAlign: 'center', fontWeight: '700' }}
+                />
+                <span style={{ fontSize: '0.85em', color: '#475569' }}>unidades</span>
+              </div>
             </div>
           </div>
 
-          {/* Imagem do Prato */}
-          <div>
-            <label style={{ display: 'block', fontWeight: '700', marginBottom: '4px', fontSize: '0.9em', color: '#475569' }}>
-              Link da Foto do Prato (opcional):
-            </label>
-            <input 
-              type="text"
-              placeholder="https://..."
-              value={image}
-              onChange={(e) => setImage(e.target.value)}
-              style={{ width: '100%', padding: '8px', fontSize: '0.85em', color: '#64748b' }}
-            />
-          </div>
-
-          {/* Botões de Ação na Parte Inferior */}
+          {/* Botoes de Acao */}
           <div style={{
-            borderTop: '2px solid #f1f5f9',
-            paddingTop: '16px',
+            borderTop: '1px solid #e2e8f0',
+            paddingTop: '14px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '10px'
+            gap: '8px'
           }}>
             <div style={{ display: 'flex', gap: '10px' }}>
-              {/* Botão Salvar Principal */}
               <button
                 type="submit"
                 style={{
                   flex: 1,
-                  background: highContrast ? '#000000' : '#15803d',
-                  color: highContrast ? '#facc15' : '#ffffff',
-                  border: highContrast ? '2px solid #facc15' : 'none',
-                  padding: '12px',
-                  borderRadius: '8px',
-                  fontWeight: '800',
-                  fontSize: '1em',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  cursor: 'pointer'
-                }}
-              >
-                <Save size={18} />
-                <span>{isCreating ? 'Cadastrar Prato' : 'Salvar Alterações'}</span>
-              </button>
-
-              {/* Botão Salvar como Novo Prato (Criar Variação) */}
-              {!isCreating && (
-                <button
-                  type="button"
-                  onClick={handleSaveAsNewClick}
-                  title="Salvar como um novo prato separado no cardápio"
-                  style={{
-                    background: '#0284c7',
-                    color: '#ffffff',
-                    border: 'none',
-                    padding: '12px 16px',
-                    borderRadius: '8px',
-                    fontWeight: '700',
-                    fontSize: '0.95em',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <Layers size={18} />
-                  <span>Salvar como Novo Prato</span>
-                </button>
-              )}
-            </div>
-
-            {/* Botão Excluir Prato */}
-            {!isCreating && (
-              <button
-                type="button"
-                onClick={() => {
-                  if (confirm(`Tem certeza que deseja EXCLUIR "${product.name}" do cardápio?`)) {
-                    onDelete(product.id);
-                  }
-                }}
-                style={{
-                  background: '#fee2e2',
-                  color: '#b91c1c',
-                  border: '1px solid #f87171',
+                  background: '#0f172a',
+                  color: '#ffffff',
                   padding: '10px',
-                  borderRadius: '8px',
-                  fontWeight: '700',
-                  fontSize: '0.9em',
+                  borderRadius: '6px',
+                  fontWeight: '600',
+                  fontSize: '0.95em',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -363,8 +423,59 @@ export default function ProductEditModal({
                   cursor: 'pointer'
                 }}
               >
-                <Trash2 size={16} />
-                <span>Excluir Este Prato Definitivamente</span>
+                <Save size={16} />
+                <span>{isCreating ? 'Cadastrar Item' : 'Salvar Alteracoes'}</span>
+              </button>
+
+              {!isCreating && (
+                <button
+                  type="button"
+                  onClick={handleSaveAsNewClick}
+                  title="Gera um novo item independente com os dados preenchidos"
+                  style={{
+                    background: '#0284c7',
+                    color: '#ffffff',
+                    padding: '10px 14px',
+                    borderRadius: '6px',
+                    fontWeight: '600',
+                    fontSize: '0.95em',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Layers size={16} />
+                  <span>Salvar como Novo Prato</span>
+                </button>
+              )}
+            </div>
+
+            {!isCreating && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm(`Confirma a exclusao definitiva de "${product.name}"?`)) {
+                    onDelete(product.id);
+                  }
+                }}
+                style={{
+                  background: '#ffffff',
+                  color: '#b91c1c',
+                  border: '1px solid #fca5a5',
+                  padding: '8px',
+                  borderRadius: '6px',
+                  fontWeight: '600',
+                  fontSize: '0.85em',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                <Trash2 size={15} />
+                <span>Excluir Item do Cardapio</span>
               </button>
             )}
           </div>
