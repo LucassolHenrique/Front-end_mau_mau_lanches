@@ -1,7 +1,8 @@
 import React from 'react';
-import { Trash2, Bike, ShoppingBag, CheckCircle } from 'lucide-react';
+import { Trash2, Bike, ShoppingBag, CheckCircle, UserCheck } from 'lucide-react';
 
 export default function OrderSummary({
+  orderNumber,
   orderItems,
   onRemoveItem,
   orderType,
@@ -15,6 +16,9 @@ export default function OrderSummary({
   setPaymentMethod,
   cashGiven,
   setCashGiven,
+  motoboys,
+  selectedMotoboyId,
+  setSelectedMotoboyId,
   onFinishOrder,
   orderSuccess,
   highContrast,
@@ -48,7 +52,7 @@ export default function OrderSummary({
       }}
     >
       <div>
-        {/* Cabecalho da Comanda */}
+        {/* Cabecalho da Comanda com Identificacao do Pedido */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -57,14 +61,20 @@ export default function OrderSummary({
           borderBottom: '1px solid #f1f5f9',
           marginBottom: '14px'
         }}>
-          <h2 style={{ fontSize: '1.15em', fontWeight: '700', color: '#0f172a' }}>
-            Comanda do Pedido
-          </h2>
+          <div>
+            <span style={{ fontSize: '0.75em', color: '#64748b', fontWeight: '600', textTransform: 'uppercase' }}>
+              Identificacao
+            </span>
+            <h2 style={{ fontSize: '1.2em', fontWeight: '800', color: '#0f172a' }}>
+              Pedido #{orderNumber}
+            </h2>
+          </div>
+
           <span style={{
             fontSize: '0.75em',
             background: '#0f172a',
             color: '#ffffff',
-            padding: '2px 8px',
+            padding: '3px 8px',
             borderRadius: '4px',
             fontWeight: '600'
           }}>
@@ -72,7 +82,7 @@ export default function OrderSummary({
           </span>
         </div>
 
-        {/* Notificacao de Gravacao com Sucesso */}
+        {/* Notificacao de Sucesso */}
         {orderSuccess && (
           <div style={{
             background: '#f0fdf4',
@@ -88,11 +98,11 @@ export default function OrderSummary({
             fontWeight: '600'
           }}>
             <CheckCircle size={18} />
-            <span>Pedido registrado e enviado para a cozinha com sucesso.</span>
+            <span>Pedido #{orderNumber} registrado e vinculado com sucesso.</span>
           </div>
         )}
 
-        {/* Lista de Itens da Comanda */}
+        {/* Lista de Itens */}
         {orderItems.length === 0 ? (
           <div style={{
             textAlign: 'center',
@@ -112,7 +122,7 @@ export default function OrderSummary({
             </p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '14px', maxHeight: '280px', overflowY: 'auto' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '14px', maxHeight: '260px', overflowY: 'auto' }}>
             {orderItems.map((item) => (
               <div 
                 key={item.cartItemId}
@@ -176,7 +186,7 @@ export default function OrderSummary({
           </div>
         )}
 
-        {/* Modalidade: Entrega ou Balcao */}
+        {/* Modalidade do Pedido */}
         <div style={{ marginBottom: '14px' }}>
           <label style={{ display: 'block', fontWeight: '600', fontSize: '0.85em', color: '#334155', marginBottom: '4px' }}>
             Modalidade:
@@ -225,16 +235,38 @@ export default function OrderSummary({
           </div>
         </div>
 
-        {/* Endereco de Entrega */}
+        {/* Bloco de Entrega: Bairro, Endereco e Associacao ao Entregador (Motoboy) */}
         {orderType === 'delivery' && (
           <div style={{
             background: '#f8fafc',
             border: '1px solid #e2e8f0',
             borderRadius: '8px',
             padding: '10px',
-            marginBottom: '14px'
+            marginBottom: '14px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px'
           }}>
-            <div style={{ marginBottom: '8px' }}>
+            {/* Associacao ao Entregador (Motoboy) */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8em', fontWeight: '700', color: '#0f172a', marginBottom: '2px' }}>
+                Entregador Responsavel (Motoboy):
+              </label>
+              <select
+                value={selectedMotoboyId}
+                onChange={(e) => setSelectedMotoboyId(e.target.value)}
+                style={{ width: '100%', padding: '6px 8px', fontSize: '0.85em', fontWeight: '600' }}
+              >
+                <option value="">Aguardando atribuicao / Sem motoboy</option>
+                {motoboys && motoboys.filter(m => m.active).map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name} {m.phone ? `(${m.phone})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
               <label style={{ display: 'block', fontSize: '0.8em', fontWeight: '600', color: '#475569', marginBottom: '2px' }}>
                 Bairro em Guaiba:
               </label>
@@ -369,7 +401,7 @@ export default function OrderSummary({
           }}
         >
           <CheckCircle size={17} />
-          <span>Fechar Comanda</span>
+          <span>Fechar Pedido #{orderNumber}</span>
         </button>
       </div>
     </aside>

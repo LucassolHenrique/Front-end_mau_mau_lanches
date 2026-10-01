@@ -50,14 +50,15 @@ export default function App() {
   const [clientStreet, setClientStreet] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('PIX');
   const [cashGiven, setCashGiven] = useState('');
+  const [selectedMotoboyId, setSelectedMotoboyId] = useState('');
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [notification, setNotification] = useState(null);
 
   // Historico de Pedidos Fechados
   const [closedOrders, setClosedOrders] = useState([
-    { id: 101, date: '24/09', time: '18:45', type: 'Entrega (Parque 35)', items: '1x Xis Salada Especial, 1x Refri Lata', total: 38.00, payment: 'PIX' },
-    { id: 102, date: '24/09', time: '19:20', type: 'Balcao', items: '1x Combo Mau Mau Supremo', total: 44.90, payment: 'Debito' },
-    { id: 103, date: '24/09', time: '20:05', type: 'Entrega (Centro)', items: '1x Xis Coracao com Bacon', total: 39.00, payment: 'Dinheiro' }
+    { id: 101, date: '24/09', time: '18:45', type: 'Entrega (Parque 35)', motoboyName: 'Cleber Ribeiro', items: '1x Xis Salada Especial, 1x Refri Lata', total: 38.00, payment: 'PIX' },
+    { id: 102, date: '24/09', time: '19:20', type: 'Balcao', motoboyName: 'Balcao (Sem entrega)', items: '1x Combo Mau Mau Supremo', total: 44.90, payment: 'Debito' },
+    { id: 103, date: '24/09', time: '20:05', type: 'Entrega (Centro)', motoboyName: 'Rodrigo Silveira', items: '1x Xis Coracao com Bacon', total: 39.00, payment: 'Dinheiro' }
   ]);
 
   // Carregamento de dados assincronos
@@ -162,7 +163,7 @@ export default function App() {
     setOrderItems(prev => prev.filter(i => i.cartItemId !== cartItemId));
   };
 
-  // 10. Fechar Comanda e dar baixa de estoque
+  // 10. Fechar Comanda, vincular motoboy e dar baixa de estoque
   const handleFinishOrder = async () => {
     if (orderItems.length === 0) return alert('Selecione itens para o pedido.');
 
@@ -175,11 +176,23 @@ export default function App() {
     const updatedProducts = await api.decrementProductStock(orderItems);
     setProducts(updatedProducts);
 
+    // Identifica e pontua o motoboy responsavel se for entrega
+    const motoboy = motoboys.find(m => m.id === Number(selectedMotoboyId));
+    if (orderType === 'delivery' && selectedMotoboyId) {
+      const updatedMb = await api.recordMotoboyDelivery(selectedMotoboyId, deliveryFee);
+      setMotoboys(updatedMb);
+    }
+
+    const currentOrderNumber = closedOrders.length + 101;
+
     const newOrder = {
-      id: Math.floor(100 + Math.random() * 900),
+      id: currentOrderNumber,
       date: new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       type: orderType === 'delivery' ? `Entrega (${selectedNeighborhood})` : 'Balcao',
+      motoboyName: orderType === 'delivery' 
+        ? (motoboy ? motoboy.name : 'Aguardando atribuicao') 
+        : 'Balcao (Sem entrega)',
       items: orderItems.map(i => `${i.quantity}x ${i.name}`).join(', '),
       total: orderTotal,
       payment: paymentMethod
@@ -187,6 +200,7 @@ export default function App() {
 
     setClosedOrders([newOrder, ...closedOrders]);
     setOrderItems([]);
+    setSelectedMotoboyId('');
     setOrderSuccess(true);
     setTimeout(() => setOrderSuccess(false), 3500);
   };
@@ -581,6 +595,7 @@ export default function App() {
 
             {/* Comanda Aberta */}
             <OrderSummary
+              orderNumber={closedOrders.length + 101}
               orderItems={orderItems}
               onRemoveItem={handleRemoveItem}
               orderType={orderType}
@@ -594,6 +609,9 @@ export default function App() {
               setPaymentMethod={setPaymentMethod}
               cashGiven={cashGiven}
               setCashGiven={setCashGiven}
+              motoboys={motoboys}
+              selectedMotoboyId={selectedMotoboyId}
+              setSelectedMotoboyId={setSelectedMotoboyId}
               onFinishOrder={handleFinishOrder}
               orderSuccess={orderSuccess}
               highContrast={highContrast}
@@ -727,6 +745,7 @@ export default function App() {
                     <th style={{ padding: '8px' }}>#</th>
                     <th style={{ padding: '8px' }}>Horario</th>
                     <th style={{ padding: '8px' }}>Tipo</th>
+                    <th style={{ padding: '8px' }}>Entregador</th>
                     <th style={{ padding: '8px' }}>Itens</th>
                     <th style={{ padding: '8px' }}>Pagamento</th>
                     <th style={{ padding: '8px' }}>Total</th>
@@ -738,6 +757,7 @@ export default function App() {
                       <td style={{ padding: '8px', fontWeight: '600' }}>#{o.id}</td>
                       <td style={{ padding: '8px', color: '#64748b' }}>{o.time}</td>
                       <td style={{ padding: '8px' }}>{o.type}</td>
+                      <td style={{ padding: '8px', color: '#0284c7', fontWeight: '600' }}>{o.motoboyName || 'Balcao'}</td>
                       <td style={{ padding: '8px' }}>{o.items}</td>
                       <td style={{ padding: '8px', color: '#64748b' }}>{o.payment}</td>
                       <td style={{ padding: '8px', fontWeight: '700' }}>R$ {o.total.toFixed(2)}</td>

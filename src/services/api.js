@@ -163,6 +163,22 @@ export const api = {
     return updated;
   },
 
+  async recordMotoboyDelivery(motoboyId, deliveryFee) {
+    const motoboys = await api.getMotoboys();
+    const updated = motoboys.map(m => {
+      if (m.id === Number(motoboyId)) {
+        return {
+          ...m,
+          deliveries: (m.deliveries || 0) + 1,
+          deliveryFeesTotal: (m.deliveryFeesTotal || 0) + deliveryFee
+        };
+      }
+      return m;
+    });
+    localStorage.setItem(STORAGE_KEYS.MOTOBOYS, JSON.stringify(updated));
+    return updated;
+  },
+
   // Reset para padrao de fabrica
   async resetToDefaults() {
     localStorage.removeItem(STORAGE_KEYS.CATEGORIES);
