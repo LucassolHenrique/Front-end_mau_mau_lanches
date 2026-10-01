@@ -4,9 +4,9 @@
 import { initialCategories, initialProducts, neighborhoods } from '../data/initialData';
 
 const STORAGE_KEYS = {
-  CATEGORIES: 'komanda_categories_v2',
-  PRODUCTS: 'komanda_products_v2',
-  ORDERS: 'komanda_orders_v2'
+  CATEGORIES: 'komanda_categories_v3',
+  PRODUCTS: 'komanda_products_v3',
+  ORDERS: 'komanda_orders_v3'
 };
 
 // Inicialização com dados padrão caso o localStorage esteja vazio

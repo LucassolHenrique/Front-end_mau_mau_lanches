@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { X, Plus, Minus } from 'lucide-react';
-import ProductCompositionView from './ProductCompositionView';
+import ProductIngredientsView from './ProductIngredientsView';
 
 export default function ProductModal({ 
   product, 
   onClose, 
   onConfirm, 
-  highContrast,
+  highContrast, 
   fontSizeClass 
 }) {
   const [quantity, setQuantity] = useState(1);
@@ -112,20 +112,20 @@ export default function ProductModal({
         </div>
 
         {/* Corpo */}
-        <div style={{ padding: '18px 20px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ padding: '18px 20px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div>
-            <h2 style={{ fontSize: '1.3em', fontWeight: '700', color: '#0f172a' }}>
+            <h2 style={{ fontSize: '1.25em', fontWeight: '700', color: '#0f172a' }}>
               {product.name}
             </h2>
-            <p style={{ fontSize: '0.9em', color: '#64748b', marginTop: '4px' }}>
+            <p style={{ fontSize: '0.85em', color: '#64748b', marginTop: '2px' }}>
               {product.desc}
             </p>
-            <div style={{ fontSize: '1.2em', fontWeight: '800', color: '#059669', marginTop: '6px' }}>
-              Preco base: R$ {product.price.toFixed(2)}
+            <div style={{ fontSize: '1.15em', fontWeight: '800', color: '#059669', marginTop: '4px' }}>
+              Preco: R$ {product.price.toFixed(2)}
             </div>
 
-            {/* Composicao detalhada do lanche (pao, carne, queijo, etc.) */}
-            <ProductCompositionView composition={product.composition} />
+            {/* Ingredientes estruturados */}
+            <ProductIngredientsView ingredients={product.ingredients} />
           </div>
 
           {/* Retirar Ingredientes */}
@@ -137,10 +137,10 @@ export default function ProductModal({
               padding: '12px'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <span style={{ fontWeight: '700', fontSize: '0.95em', color: '#0f172a' }}>
-                  Retirar algum ingrediente?
+                <span style={{ fontWeight: '700', fontSize: '0.9em', color: '#0f172a' }}>
+                  Retirar ingredientes?
                 </span>
-                <span style={{ fontSize: '0.8em', color: '#64748b' }}>Opcional (Sem custo)</span>
+                <span style={{ fontSize: '0.8em', color: '#64748b' }}>Sem custo</span>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -160,7 +160,7 @@ export default function ProductModal({
                         border: isChecked ? '1px solid #f87171' : '1px solid #cbd5e1'
                       }}
                     >
-                      <span style={{ fontSize: '0.9em', fontWeight: isChecked ? '700' : '500', color: isChecked ? '#b91c1c' : '#1e293b' }}>
+                      <span style={{ fontSize: '0.85em', fontWeight: isChecked ? '700' : '500', color: isChecked ? '#b91c1c' : '#1e293b' }}>
                         {item}
                       </span>
                       <input 
@@ -185,7 +185,7 @@ export default function ProductModal({
               padding: '12px'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <span style={{ fontWeight: '700', fontSize: '0.95em', color: '#0f172a' }}>
+                <span style={{ fontWeight: '700', fontSize: '0.9em', color: '#0f172a' }}>
                   Adicionais
                 </span>
                 <span style={{ fontSize: '0.8em', color: '#059669', fontWeight: '600' }}>Opcional</span>
@@ -209,7 +209,7 @@ export default function ProductModal({
                       }}
                     >
                       <div>
-                        <span style={{ fontSize: '0.9em', fontWeight: isChecked ? '700' : '500', color: '#1e293b' }}>
+                        <span style={{ fontSize: '0.85em', fontWeight: isChecked ? '700' : '500', color: '#1e293b' }}>
                           + {add.name}
                         </span>
                         <span style={{ display: 'block', fontSize: '0.8em', color: '#059669', fontWeight: '600' }}>
@@ -231,59 +231,57 @@ export default function ProductModal({
 
           {/* Observacao para a Cozinha */}
           <div>
-            <label style={{ display: 'block', fontWeight: '600', fontSize: '0.9em', color: '#334155', marginBottom: '4px' }}>
+            <label style={{ display: 'block', fontWeight: '600', fontSize: '0.85em', color: '#334155', marginBottom: '4px' }}>
               Observacao para a cozinha:
             </label>
             <textarea
               rows={2}
-              placeholder="Ex: Pao bem tostado, cortar ao meio, maionese a parte..."
+              placeholder="Ex: Pao bem tostado, cortar ao meio..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              style={{ width: '100%', padding: '8px 10px', fontSize: '0.9em', resize: 'none' }}
+              style={{ width: '100%', padding: '8px 10px', fontSize: '0.85em', resize: 'none' }}
             />
           </div>
         </div>
 
-        {/* Rodape de Confirmacao */}
+        {/* Rodape */}
         <div style={{
-          padding: '14px 20px',
+          padding: '12px 20px',
           borderTop: '1px solid #e2e8f0',
           background: '#ffffff',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: '14px'
+          gap: '12px'
         }}>
-          {/* Contador */}
           <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #cbd5e1', borderRadius: '6px' }}>
             <button
               onClick={() => setQuantity(Math.max(1, quantity - 1))}
-              style={{ background: '#f8fafc', padding: '8px 12px', color: '#0f172a' }}
+              style={{ background: '#f8fafc', padding: '6px 12px', color: '#0f172a' }}
             >
               <Minus size={15} />
             </button>
-            <span style={{ padding: '8px 14px', fontWeight: '700', fontSize: '1em', minWidth: '35px', textAlign: 'center' }}>
+            <span style={{ padding: '6px 12px', fontWeight: '700', fontSize: '0.95em', minWidth: '32px', textAlign: 'center' }}>
               {quantity}
             </span>
             <button
               onClick={() => setQuantity(quantity + 1)}
-              style={{ background: '#f8fafc', padding: '8px 12px', color: '#0f172a' }}
+              style={{ background: '#f8fafc', padding: '6px 12px', color: '#0f172a' }}
             >
               <Plus size={15} />
             </button>
           </div>
 
-          {/* Botao de Adicionar */}
           <button
             onClick={handleConfirm}
             style={{
               flex: 1,
               background: '#0f172a',
               color: '#ffffff',
-              padding: '12px 18px',
+              padding: '10px 16px',
               borderRadius: '6px',
               fontWeight: '700',
-              fontSize: '0.95em',
+              fontSize: '0.9em',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

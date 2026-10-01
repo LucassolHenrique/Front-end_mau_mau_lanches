@@ -1,6 +1,6 @@
 import React from 'react';
 import { Copy, Edit3, Power, Plus, AlertCircle } from 'lucide-react';
-import ProductCompositionView from './ProductCompositionView';
+import ProductIngredientsView from './ProductIngredientsView';
 
 export default function ProductCard({ 
   product, 
@@ -22,7 +22,7 @@ export default function ProductCard({
         border: highContrast 
           ? (isAvailable ? '2px solid #000000' : '2px dashed #dc2626')
           : (isAvailable ? '1px solid #e2e8f0' : '1px dashed #cbd5e1'),
-        borderRadius: '10px',
+        borderRadius: '8px',
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
@@ -106,7 +106,7 @@ export default function ProductCard({
               e.stopPropagation();
               onEdit(product);
             }}
-            title="Editar dados e composicao do item"
+            title="Editar item e ingredientes"
             style={{
               background: '#ffffff',
               color: '#0f172a',
@@ -130,7 +130,7 @@ export default function ProductCard({
               e.stopPropagation();
               onDuplicate(product);
             }}
-            title="Duplicar este item no cardapio"
+            title="Copiar este item"
             style={{
               background: '#ffffff',
               color: '#0f172a',
@@ -154,7 +154,7 @@ export default function ProductCard({
               e.stopPropagation();
               onToggleActive(product.id);
             }}
-            title={product.active ? 'Pausar venda deste item' : 'Reativar venda deste item'}
+            title={product.active ? 'Pausar venda' : 'Ativar venda'}
             style={{
               background: product.active ? '#fee2e2' : '#dcfce7',
               color: product.active ? '#b91c1c' : '#15803d',
@@ -176,10 +176,10 @@ export default function ProductCard({
       </div>
 
       {/* Conteudo do Card */}
-      <div style={{ padding: '14px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+      <div style={{ padding: '12px 14px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
         <div>
           <h3 style={{ 
-            fontSize: '1.1em', 
+            fontSize: '1.05em', 
             fontWeight: '700', 
             color: '#0f172a', 
             lineHeight: '1.3',
@@ -197,21 +197,21 @@ export default function ProductCard({
             {product.desc}
           </p>
 
-          {/* Componente que separa cada parte da comida (pao, carne, queijo, etc.) */}
-          <ProductCompositionView composition={product.composition} />
+          {/* Ingredientes estruturados */}
+          <ProductIngredientsView ingredients={product.ingredients} />
         </div>
 
-        {/* Rodape de Preco e Acao */}
+        {/* Rodape de Preco e Pedido */}
         <div style={{ 
           display: 'flex', 
           justifyContent: 'space-between', 
           alignItems: 'center', 
           marginTop: '12px', 
-          paddingTop: '10px', 
+          paddingTop: '8px', 
           borderTop: '1px solid #f1f5f9' 
         }}>
           <div>
-            <span style={{ fontSize: '0.75em', color: '#64748b', display: 'block' }}>Preco unitario</span>
+            <span style={{ fontSize: '0.75em', color: '#64748b', display: 'block' }}>Preco</span>
             <span style={{ 
               fontSize: '1.15em', 
               fontWeight: '800', 
@@ -230,10 +230,10 @@ export default function ProductCard({
                 : (highContrast ? '#000000' : '#0f172a'),
               color: !isAvailable ? '#64748b' : '#ffffff',
               border: highContrast ? '2px solid #facc15' : 'none',
-              padding: '8px 12px',
+              padding: '8px 14px',
               borderRadius: '6px',
               fontWeight: '600',
-              fontSize: '0.9em',
+              fontSize: '0.85em',
               display: 'flex',
               alignItems: 'center',
               gap: '6px',

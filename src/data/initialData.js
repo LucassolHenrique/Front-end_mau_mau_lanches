@@ -1,4 +1,61 @@
-// Dados iniciais estruturados com ficha tecnica de ingredientes (pao, carne, queijo, salada, molhos)
+// Dados iniciais com pre-cadastro de ingredientes e produtos
+
+export const preRegisteredIngredients = {
+  pao: [
+    'Pao de Xis Tradicional',
+    'Pao de Cachorro-quente',
+    'Pao Brioche de Hamburguer',
+    'Pao Frances',
+    'Nao se aplica'
+  ],
+  carne: [
+    'Hamburguer Bovino 200g',
+    'Hamburguer Bovino 150g',
+    'Coracao de Frango ao Alho',
+    '2 Salsichas Especiais',
+    'File de Frango Grelhado',
+    'Alcatra Grelhada 180g',
+    'Nao se aplica'
+  ],
+  queijo: [
+    'Queijo Prato',
+    'Queijo Prato Duplo',
+    'Queijo Mussarela',
+    'Queijo Coalho Grelhado',
+    'Cheddar Cremoso',
+    'Catupiry Original',
+    'Nenhum'
+  ],
+  frios: [
+    'Presunto',
+    'Bacon Fatiado',
+    'Bacon em Cubos',
+    'Calabresa Fatiada',
+    'Bacon, Calabresa e Presunto',
+    'Nenhum'
+  ],
+  salada: [
+    'Alface e Tomate',
+    'Alface, Tomate, Milho e Ervilha',
+    'Vinagrete',
+    'Nenhuma'
+  ],
+  molho: [
+    'Maionese Caseira',
+    'Maionese Temperada Verde',
+    'Molho de Tomate Caseiro',
+    'Molho Barbecue',
+    'Molho de Alho',
+    'Nenhum'
+  ],
+  acompanhamento: [
+    'Nenhum',
+    'Batata Frita 200g',
+    'Batata Frita 500g',
+    'Farofa Temperada',
+    'Batata Frita e Refrigerante'
+  ]
+};
 
 export const initialCategories = [
   { 
@@ -6,21 +63,21 @@ export const initialCategories = [
     name: 'Combos e Promocoes', 
     active: true, 
     isCombo: true,
-    description: 'Combinacoes completas com lanche, acompanhamento e bebida' 
+    description: 'Combinacoes de lanche, acompanhamento e bebida' 
   },
   { 
     id: 2, 
     name: 'Xis Gaucho Tradicional', 
     active: true, 
     isCombo: false,
-    description: 'Prensados na chapa com composicao completa de ingredientes' 
+    description: 'Prensados na chapa com ingredientes padrao' 
   },
   { 
     id: 3, 
     name: 'Cachorro-quente', 
     active: true, 
     isCombo: false,
-    description: 'Pao especial, salsicha ao molho caseiro e acompanhamentos' 
+    description: 'Pao especial, salsicha ao molho e complementos' 
   },
   { 
     id: 4, 
@@ -34,7 +91,7 @@ export const initialCategories = [
     name: 'Bebidas', 
     active: true, 
     isCombo: false,
-    description: 'Refrigerantes em lata e garrafa, cervejas e sucos' 
+    description: 'Refrigerantes e cervejas geladas' 
   },
 ];
 
@@ -45,20 +102,20 @@ export const initialProducts = [
     catId: 1,
     name: 'Combo Mau Mau Supremo',
     price: 44.90,
-    desc: '1x Xis Salada Especial, 1x Batata Frita individual 200g e 1x Refrigerante Lata 350ml',
+    desc: '1x Xis Salada Especial, 1x Batata Frita 200g e 1x Refrigerante Lata 350ml',
     image: 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=600&q=80',
     active: true,
     isCombo: true,
     stockQuantity: 15,
     hasStockLimit: true,
-    composition: {
+    ingredients: {
       pao: 'Pao de Xis Tradicional',
-      carne: 'Hamburguer Bovino Artesanal 200g',
-      queijo: 'Queijo Prato Fatiado',
-      frios: 'Presunto Cozido',
-      salada: 'Alface Americana e Tomate',
-      molho: 'Maionese Temperada da Casa',
-      acompanhamento: 'Batata Frita 200g e Refrigerante Lata'
+      carne: 'Hamburguer Bovino 200g',
+      queijo: 'Queijo Prato',
+      frios: 'Presunto',
+      salada: 'Alface e Tomate',
+      molho: 'Maionese Caseira',
+      acompanhamento: 'Batata Frita e Refrigerante'
     },
     removableIngredients: ['Sem Tomate', 'Sem Alface', 'Sem Maionese', 'Sem Presunto'],
     additionals: [
@@ -73,20 +130,20 @@ export const initialProducts = [
     catId: 1,
     name: 'Combo Casal',
     price: 78.00,
-    desc: '2x Xis Tradicionais, 1x Batata Grande 400g com Cheddar e Bacon e 1x Refrigerante 2L',
+    desc: '2x Xis Tradicionais, 1x Batata Grande 500g com Cheddar e Bacon e 1x Refrigerante',
     image: 'https://images.unsplash.com/photo-1561758033-d89a9ad46330?auto=format&fit=crop&w=600&q=80',
     active: true,
     isCombo: true,
     stockQuantity: 10,
     hasStockLimit: true,
-    composition: {
-      pao: 'Pao de Xis Tradicional (2 un)',
-      carne: 'Hamburguer Bovino Artesanal (2 un)',
-      queijo: 'Queijo Prato e Cheddar Cremoso',
+    ingredients: {
+      pao: 'Pao de Xis Tradicional',
+      carne: 'Hamburguer Bovino 200g',
+      queijo: 'Cheddar Cremoso',
       frios: 'Bacon em Cubos',
       salada: 'Alface e Tomate',
-      molho: 'Maionese da Casa',
-      acompanhamento: 'Batata Frita 400g e Refrigerante 2L'
+      molho: 'Maionese Caseira',
+      acompanhamento: 'Batata Frita 500g'
     },
     removableIngredients: ['Sem Cheddar na Batata', 'Sem Bacon na Batata'],
     additionals: [
@@ -101,21 +158,21 @@ export const initialProducts = [
     catId: 2,
     name: 'Xis Salada Tradicional',
     price: 28.00,
-    desc: 'Pao prensado gigante, hamburguer bovino 200g, queijo prato, presunto, tomate, alface e maionese',
+    desc: 'Pao prensado, hamburguer bovino 200g, queijo prato, presunto, tomate, alface e maionese',
     image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80',
     active: true,
     stockQuantity: 12,
     hasStockLimit: true,
-    composition: {
-      pao: 'Pao de Xis Prensado',
+    ingredients: {
+      pao: 'Pao de Xis Tradicional',
       carne: 'Hamburguer Bovino 200g',
       queijo: 'Queijo Prato',
       frios: 'Presunto',
-      salada: 'Tomate e Alface',
+      salada: 'Alface e Tomate',
       molho: 'Maionese Caseira',
       acompanhamento: 'Nenhum'
     },
-    removableIngredients: ['Sem Tomate', 'Sem Alface', 'Sem Maionese', 'Sem Presunto', 'Sem Milho e Ervilha'],
+    removableIngredients: ['Sem Tomate', 'Sem Alface', 'Sem Maionese', 'Sem Presunto'],
     additionals: [
       { id: 'bacon', name: 'Bacon crocante', price: 5.00 },
       { id: 'queijo', name: 'Queijo duplo', price: 4.50 },
@@ -129,21 +186,21 @@ export const initialProducts = [
     catId: 2,
     name: 'Xis Coracao com Bacon',
     price: 34.00,
-    desc: 'Pao prensado, coracao de frango grelhado no alho, fatias de bacon, queijo prato duplo e maionese',
+    desc: 'Pao prensado, coracao de frango ao alho, bacon fatiado, queijo prato duplo e maionese',
     image: 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=600&q=80',
     active: true,
     stockQuantity: 8,
     hasStockLimit: true,
-    composition: {
-      pao: 'Pao de Xis Prensado',
-      carne: 'Coracao de Frango 220g ao Alho',
+    ingredients: {
+      pao: 'Pao de Xis Tradicional',
+      carne: 'Coracao de Frango ao Alho',
       queijo: 'Queijo Prato Duplo',
-      frios: 'Bacon Fatiado Grelhado',
-      salada: 'Tomate e Alface',
+      frios: 'Bacon Fatiado',
+      salada: 'Alface e Tomate',
       molho: 'Maionese Caseira',
       acompanhamento: 'Nenhum'
     },
-    removableIngredients: ['Sem Alho', 'Sem Bacon', 'Sem Tomate', 'Sem Alface', 'Sem Maionese'],
+    removableIngredients: ['Sem Bacon', 'Sem Tomate', 'Sem Alface', 'Sem Maionese'],
     additionals: [
       { id: 'queijo', name: 'Queijo adicional', price: 4.50 },
       { id: 'ovo', name: 'Ovo frito', price: 3.00 },
@@ -155,24 +212,23 @@ export const initialProducts = [
     catId: 2,
     name: 'Xis Tudo Mau Mau',
     price: 38.00,
-    desc: 'Hamburguer bovino, file de frango, bacon fatiado, calabresa, ovo frito, queijo duplo, presunto e salada',
+    desc: 'Hamburguer 150g, file de frango, bacon fatiado, calabresa, queijo duplo, presunto e salada',
     image: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=600&q=80',
     active: true,
     stockQuantity: 6,
     hasStockLimit: true,
-    composition: {
-      pao: 'Pao de Xis Prensado',
-      carne: 'Hamburguer 150g e File de Frango',
+    ingredients: {
+      pao: 'Pao de Xis Tradicional',
+      carne: 'Hamburguer Bovino 150g',
       queijo: 'Queijo Prato Duplo',
       frios: 'Bacon, Calabresa e Presunto',
-      salada: 'Alface, Tomate e Ovo Frito',
-      molho: 'Maionese Especial',
+      salada: 'Alface e Tomate',
+      molho: 'Maionese Caseira',
       acompanhamento: 'Nenhum'
     },
-    removableIngredients: ['Sem Calabresa', 'Sem Frango', 'Sem Bacon', 'Sem Ovo', 'Sem Tomate', 'Sem Alface'],
+    removableIngredients: ['Sem Calabresa', 'Sem Bacon', 'Sem Tomate', 'Sem Alface'],
     additionals: [
-      { id: 'cheddar', name: 'Cheddar cremoso', price: 4.50 },
-      { id: 'cebola_caramelizada', name: 'Cebola caramelizada', price: 4.00 }
+      { id: 'cheddar', name: 'Cheddar cremoso', price: 4.50 }
     ]
   },
 
@@ -182,25 +238,24 @@ export const initialProducts = [
     catId: 3,
     name: 'Cachorro-quente Especial Prensado',
     price: 22.00,
-    desc: 'Pao tradicional levemente prensado, 2 salsichas ao molho caseiro, queijo derretido, milho, ervilha e batata palha',
+    desc: 'Pao tradicional, 2 salsichas ao molho caseiro, queijo derretido, milho e ervilha',
     image: 'https://images.unsplash.com/photo-1619740455993-9e612b1af08a?auto=format&fit=crop&w=600&q=80',
     active: true,
     stockQuantity: 20,
     hasStockLimit: true,
-    composition: {
+    ingredients: {
       pao: 'Pao de Cachorro-quente',
-      carne: '2 Salsichas ao Molho Vermelho',
-      queijo: 'Queijo Prato Ralado',
+      carne: '2 Salsichas Especiais',
+      queijo: 'Queijo Prato',
       frios: 'Nenhum',
-      salada: 'Milho e Ervilha',
-      molho: 'Molho de Tomate Caseiro e Maionese',
-      acompanhamento: 'Batata Palha Crocante'
+      salada: 'Alface, Tomate, Milho e Ervilha',
+      molho: 'Molho de Tomate Caseiro',
+      acompanhamento: 'Nenhum'
     },
-    removableIngredients: ['Sem Batata Palha', 'Sem Milho', 'Sem Ervilha', 'Sem Molho'],
+    removableIngredients: ['Sem Milho e Ervilha', 'Sem Molho'],
     additionals: [
       { id: 'salsicha_extra', name: '1 Salsicha extra', price: 3.50 },
-      { id: 'bacon', name: 'Bacon em cubos', price: 4.50 },
-      { id: 'queijo_ralado', name: 'Queijo ralado extra', price: 3.00 }
+      { id: 'bacon', name: 'Bacon em cubos', price: 4.50 }
     ]
   },
 
@@ -210,24 +265,23 @@ export const initialProducts = [
     catId: 4,
     name: 'Batata Frita Suprema 500g',
     price: 28.00,
-    desc: '500g de batatas selecionadas cobertas com molho cheddar cremoso e bacon frito em cubos',
+    desc: '500g de batata palito coberta com molho cheddar e bacon frito em cubos',
     image: 'https://images.unsplash.com/photo-1576107232684-1279f3908594?auto=format&fit=crop&w=600&q=80',
     active: true,
     stockQuantity: 15,
     hasStockLimit: true,
-    composition: {
+    ingredients: {
       pao: 'Nao se aplica',
       carne: 'Nao se aplica',
-      queijo: 'Molho Cheddar Cremoso',
-      frios: 'Bacon Frito em Cubos',
-      salada: 'Nao se aplica',
-      molho: 'Cheddar',
-      acompanhamento: '500g de Batata Frita Palito'
+      queijo: 'Cheddar Cremoso',
+      frios: 'Bacon em Cubos',
+      salada: 'Nenhuma',
+      molho: 'Nenhum',
+      acompanhamento: 'Batata Frita 500g'
     },
     removableIngredients: ['Sem Cheddar', 'Sem Bacon'],
     additionals: [
-      { id: 'molho_alho', name: 'Molho especial de alho', price: 3.50 },
-      { id: 'barbecue', name: 'Molho Barbecue defumado', price: 3.00 }
+      { id: 'molho_alho', name: 'Molho especial de alho', price: 3.50 }
     ]
   },
   {
@@ -235,24 +289,22 @@ export const initialProducts = [
     catId: 4,
     name: 'Espeto de Alcatra com Queijo Coalho',
     price: 18.00,
-    desc: 'Cortes nobres de alcatra grelhados com queijo coalho tostado na brasa, farofa e vinagrete',
+    desc: 'Alcatra grelhada com queijo coalho tostado na brasa, farofa e vinagrete',
     image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=600&q=80',
     active: true,
     stockQuantity: 10,
     hasStockLimit: true,
-    composition: {
+    ingredients: {
       pao: 'Nao se aplica',
       carne: 'Alcatra Grelhada 180g',
       queijo: 'Queijo Coalho Grelhado',
-      frios: 'Nao se aplica',
-      salada: 'Vinagrete de Tomate e Cebola',
+      frios: 'Nenhum',
+      salada: 'Vinagrete',
       molho: 'Nenhum',
       acompanhamento: 'Farofa Temperada'
     },
     removableIngredients: ['Sem Farofa', 'Sem Vinagrete'],
-    additionals: [
-      { id: 'pao_alho', name: 'Pao de alho grelhado', price: 6.00 }
-    ]
+    additionals: []
   },
 
   // BEBIDAS
@@ -261,24 +313,22 @@ export const initialProducts = [
     catId: 5,
     name: 'Refrigerante Lata 350ml',
     price: 6.00,
-    desc: 'Coca-Cola Tradicional, Coca Zero, Guarana Antarctica ou Fanta Laranja',
+    desc: 'Coca-Cola, Guarana Antarctica ou Fanta Laranja',
     image: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80',
     active: true,
     stockQuantity: 40,
     hasStockLimit: true,
-    composition: {
+    ingredients: {
       pao: 'Nao se aplica',
       carne: 'Nao se aplica',
-      queijo: 'Nao se aplica',
-      frios: 'Nao se aplica',
-      salada: 'Nao se aplica',
-      molho: 'Nao se aplica',
-      acompanhamento: 'Lata 350ml Gelada'
+      queijo: 'Nenhum',
+      frios: 'Nenhum',
+      salada: 'Nenhuma',
+      molho: 'Nenhum',
+      acompanhamento: 'Lata 350ml'
     },
     removableIngredients: [],
-    additionals: [
-      { id: 'copo_gelo', name: 'Copo descartavel com gelo e limao', price: 1.50 }
-    ]
+    additionals: []
   },
   {
     id: 502,
@@ -290,14 +340,14 @@ export const initialProducts = [
     active: true,
     stockQuantity: 25,
     hasStockLimit: true,
-    composition: {
+    ingredients: {
       pao: 'Nao se aplica',
       carne: 'Nao se aplica',
-      queijo: 'Nao se aplica',
-      frios: 'Nao se aplica',
-      salada: 'Nao se aplica',
-      molho: 'Nao se aplica',
-      acompanhamento: 'Garrafa 330ml Gelada'
+      queijo: 'Nenhum',
+      frios: 'Nenhum',
+      salada: 'Nenhuma',
+      molho: 'Nenhum',
+      acompanhamento: 'Garrafa 330ml'
     },
     removableIngredients: [],
     additionals: []
