@@ -1,29 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   UtensilsCrossed, 
-  ShoppingBag, 
   Boxes, 
   Bike, 
   BarChart3, 
-  Plus, 
-  Trash2, 
-  Clock, 
-  MapPin, 
-  CheckCircle,
-  AlertCircle,
-  Copy,
-  Sparkles
+  PlusCircle, 
+  RotateCcw,
+  Sparkles,
+  AlertCircle
 } from 'lucide-react';
 
-import { initialCategories, initialProducts, neighborhoods } from './data/initialData';
+import { api } from './services/api';
+import { neighborhoods } from './data/initialData';
 import AccessibilityBar from './components/AccessibilityBar';
 import CategorySection from './components/CategorySection';
 import ProductModal from './components/ProductModal';
+import ProductEditModal from './components/ProductEditModal';
 import OrderSummary from './components/OrderSummary';
 import SeniorGuideBanner from './components/SeniorGuideBanner';
 
 export default function App() {
-  // Configurações de Acessibilidade Visual / Modo Sênior
+  // Acessibilidade e Facilidade Visual
   const [fontSize, setFontSize] = useState('normal'); // 'normal' | 'large' | 'xlarge'
   const [highContrast, setHighContrast] = useState(false);
   const [seniorGuide, setSeniorGuide] = useState(true);
@@ -33,14 +30,17 @@ export default function App() {
   const [deliveryTime, setDeliveryTime] = useState('40 min');
   const [dashPeriod, setDashPeriod] = useState('hoje');
 
-  // Estado das Categorias e Produtos (Estilo iFood com Ativar/Pausar)
-  const [categories, setCategories] = useState(initialCategories);
-  const [products, setProducts] = useState(initialProducts);
+  // Estado das Categorias e Produtos (persistidos via API mock)
+  const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Modal de Personalização de Lanche (Estilo iFood)
-  const [selectedProductForModal, setSelectedProductForModal] = useState(null);
+  // Modais
+  const [selectedProductForModal, setSelectedProductForModal] = useState(null); // Montar lanche (iFood)
+  const [editingProduct, setEditingProduct] = useState(null); // Editar produto
+  const [isCreatingProduct, setIsCreatingProduct] = useState(false); // Criar novo produto
 
-  // Estado da Comanda / Pedido
+  // Comanda do Pedido
   const [orderItems, setOrderItems] = useState([]);
   const [orderType, setOrderType] = useState('delivery');
   const [selectedNeighborhood, setSelectedNeighborhood] = useState('Parque 35');
@@ -50,93 +50,122 @@ export default function App() {
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [notification, setNotification] = useState(null);
 
-  // Pedidos Fechados (Dashboard)
+  // Histórico de Pedidos Fechados
   const [closedOrders, setClosedOrders] = useState([
-    { id: 101, date: '24/09', time: '18:45', type: 'Entrega (Parque 35)', items: '1x Xis Salada Especial, 1x Refri Lata', consumed: '1x Pão Xis, 0.2kg Carne', total: 38.00, payment: 'PIX' },
-    { id: 102, date: '24/09', time: '19:20', type: 'Balcão', items: '1x Combo Mau Mau Supremo', consumed: '1x Pão Xis, 1x Batata, 1x Refri', total: 44.90, payment: 'Débito' },
-    { id: 103, date: '24/09', time: '20:05', type: 'Entrega (Centro)', items: '1x Xis Coração com Bacon', consumed: '1x Pão Xis, 0.22kg Coração, Bacon', total: 39.00, payment: 'Dinheiro' }
+    { id: 101, date: '24/09', time: '18:45', type: 'Entrega (Parque 35)', items: '1x Xis Salada Especial, 1x Refri Lata', total: 38.00, payment: 'PIX' },
+    { id: 102, date: '24/09', time: '19:20', type: 'Balcão', items: '1x Combo Mau Mau Supremo', total: 44.90, payment: 'Débito' },
+    { id: 103, date: '24/09', time: '20:05', type: 'Entrega (Centro)', items: '1x Xis Coração com Bacon', total: 39.00, payment: 'Dinheiro' }
   ]);
 
-  // Estoque
-  const [inventory] = useState([
-    { id: 1, name: 'Pão de Xis Tradicional', unit: 'un', current: 38, min: 20 },
-    { id: 2, name: 'Hambúrguer Bovino 200g (kg)', unit: 'kg', current: 7.4, min: 5.0 },
-    { id: 3, name: 'Coração de Frango (kg)', unit: 'kg', current: 2.1, min: 4.0 },
-    { id: 4, name: 'Bacon Fatiado (kg)', unit: 'kg', current: 1.8, min: 3.0 },
-    { id: 5, name: 'Pão de Cachorro-quente', unit: 'un', current: 40, min: 15 },
-    { id: 6, name: 'Salsicha ao Molho (kg)', unit: 'kg', current: 4.2, min: 3.0 },
-    { id: 7, name: 'Queijo Prato (kg)', unit: 'kg', current: 3.5, min: 4.0 },
-    { id: 8, name: 'Batata Congelada (kg)', unit: 'kg', current: 12.0, min: 6.0 },
-    { id: 9, name: 'Refrigerante Lata', unit: 'un', current: 52, min: 24 }
-  ]);
+  // Carrega dados iniciais da API
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [cats, prods] = await Promise.all([
+          api.getCategories(),
+          api.getProducts()
+        ]);
+        setCategories(cats);
+        setProducts(prods);
+      } catch (err) {
+        console.error('Erro ao carregar dados:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadData();
+  }, []);
 
-  // Motoboys
-  const [motoboys] = useState([
-    { id: 1, name: 'Cleber Ribeiro', baseFee: 40.00, deliveries: 4, deliveryFeesTotal: 26.00 },
-    { id: 2, name: 'Rodrigo Silveira', baseFee: 40.00, deliveries: 3, deliveryFeesTotal: 21.00 }
-  ]);
-
-  // Helper de Notificação Rápida
+  // Helper de Notificação Visual Rápida
   const showFeedback = (msg) => {
     setNotification(msg);
     setTimeout(() => setNotification(null), 3500);
   };
 
-  // 1. Toggle Ativar / Pausar Categoria Inteira
-  const handleToggleCategory = (catId) => {
-    setCategories(prev => prev.map(cat => {
-      if (cat.id === catId) {
-        const nextStatus = !cat.active;
-        showFeedback(nextStatus 
-          ? `Categoria "${cat.name}" foi ATIVADA no cardápio!` 
-          : `Categoria "${cat.name}" foi PAUSADA no cardápio!`
-        );
-        return { ...cat, active: nextStatus };
-      }
-      return cat;
-    }));
+  // 1. Toggle Categoria Inteira (Ativar / Pausar)
+  const handleToggleCategory = async (catId) => {
+    const updated = await api.toggleCategory(catId);
+    setCategories(updated);
+    const cat = updated.find(c => c.id === catId);
+    showFeedback(cat?.active 
+      ? `Categoria "${cat.name}" foi ATIVADA!` 
+      : `Categoria "${cat.name}" foi PAUSADA!`
+    );
   };
 
-  // 2. Toggle Ativar / Pausar Produto Individual
-  const handleToggleProduct = (prodId) => {
-    setProducts(prev => prev.map(prod => {
-      if (prod.id === prodId) {
-        const nextStatus = !prod.active;
-        showFeedback(nextStatus 
-          ? `Produto "${prod.name}" agora está ATIVO!` 
-          : `Produto "${prod.name}" foi PAUSADO temporariamente!`
-        );
-        return { ...prod, active: nextStatus };
-      }
-      return prod;
-    }));
+  // 2. Toggle Produto Individual (Ativar / Pausar)
+  const handleToggleProduct = async (prodId) => {
+    const updated = await api.toggleProductStatus(prodId);
+    setProducts(updated);
+    const prod = updated.find(p => p.id === prodId);
+    showFeedback(prod?.active 
+      ? `"${prod.name}" está ATIVO para vendas!` 
+      : `"${prod.name}" foi PAUSADO temporariamente!`
+    );
   };
 
-  // 3. Copiar / Clonar Alimento no Cardápio (Exatamente como pedido)
-  const handleDuplicateProduct = (prod) => {
-    const newProduct = {
+  // 3. Duplicar / Copiar Alimento no Cardápio
+  const handleDuplicateProduct = async (prod) => {
+    const newProductData = {
       ...prod,
-      id: Date.now(),
       name: `${prod.name} (Cópia)`,
       active: true
     };
-    setProducts(prev => [newProduct, ...prev]);
-    showFeedback(`Alimento "${prod.name}" clonado com sucesso no cardápio!`);
+    const updated = await api.createProduct(newProductData);
+    setProducts(updated);
+    showFeedback(`Alimento "${prod.name}" foi clonado com sucesso!`);
   };
 
-  // 4. Confirmar Item Personalizado do Modal no Pedido
+  // 4. Salvar Edição de Produto Existente
+  const handleSaveProduct = async (productData) => {
+    if (isCreatingProduct) {
+      const updated = await api.createProduct(productData);
+      setProducts(updated);
+      setIsCreatingProduct(false);
+      showFeedback(`Novo prato "${productData.name}" cadastrado com sucesso!`);
+    } else {
+      const updated = await api.updateProduct(productData.id, productData);
+      setProducts(updated);
+      setEditingProduct(null);
+      showFeedback(`Prato "${productData.name}" atualizado com sucesso!`);
+    }
+  };
+
+  // 5. Salvar como Novo Prato (Cria variação sem alterar o original)
+  const handleSaveAsNewProduct = async (newProductData) => {
+    const updated = await api.createProduct(newProductData);
+    setProducts(updated);
+    setEditingProduct(null);
+    showFeedback(`Novo prato "${newProductData.name}" salvo no cardápio!`);
+  };
+
+  // 6. Excluir Produto Definitivamente
+  const handleDeleteProduct = async (prodId) => {
+    const updated = await api.deleteProduct(prodId);
+    setProducts(updated);
+    setEditingProduct(null);
+    showFeedback('Prato excluído do cardápio com sucesso!');
+  };
+
+  // 7. Abrir formulário para adicionar novo prato em uma categoria
+  const handleOpenAddProduct = (defaultCatId = 2) => {
+    setIsCreatingProduct(true);
+    setEditingProduct({ catId: defaultCatId });
+  };
+
+  // 8. Confirmar Item Personalizado do Modal no Pedido
   const handleConfirmItemToOrder = (customizedItem) => {
     setOrderItems(prev => [customizedItem, ...prev]);
     showFeedback(`${customizedItem.quantity}x ${customizedItem.name} adicionado à comanda!`);
   };
 
-  // 5. Remover Item da Comanda
+  // 9. Remover Item da Comanda
   const handleRemoveItem = (cartItemId) => {
     setOrderItems(prev => prev.filter(i => i.cartItemId !== cartItemId));
   };
 
-  // 6. Fechar Comanda e Enviar para Cozinha
-  const handleFinishOrder = () => {
+  // 10. Fechar Comanda e Baixar Estoque Automático
+  const handleFinishOrder = async () => {
     if (orderItems.length === 0) return alert('Selecione itens para o pedido.');
 
     const itemsSubtotal = orderItems.reduce((acc, item) => acc + (item.unitPrice * item.quantity), 0);
@@ -145,13 +174,16 @@ export default function App() {
       : 0;
     const orderTotal = itemsSubtotal + deliveryFee;
 
+    // Baixa automática nas porções de estoque diário (ex: carnes)
+    const updatedProducts = await api.decrementProductStock(orderItems);
+    setProducts(updatedProducts);
+
     const newOrder = {
       id: Math.floor(100 + Math.random() * 900),
       date: new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       type: orderType === 'delivery' ? `Entrega (${selectedNeighborhood})` : 'Balcão',
       items: orderItems.map(i => `${i.quantity}x ${i.name}`).join(', '),
-      consumed: orderItems.map(i => `${i.quantity}x Insumo`).join(', '),
       total: orderTotal,
       payment: paymentMethod
     };
@@ -162,16 +194,28 @@ export default function App() {
     setTimeout(() => setOrderSuccess(false), 4000);
   };
 
-  // Classe CSS de acordo com o tamanho de fonte escolhido
-  const fontSizeClass = `font-${fontSize}`;
+  // Restaurar dados originais de fábrica
+  const handleResetDefaults = async () => {
+    if (confirm('Deseja restaurar o cardápio original de fábrica?')) {
+      const data = await api.resetToDefaults();
+      setCategories(data.categories);
+      setProducts(data.products);
+      showFeedback('Cardápio restaurado com sucesso!');
+    }
+  };
 
+  const fontSizeClass = `font-${fontSize}`;
   const totalRevenue = closedOrders.reduce((acc, o) => acc + o.total, 0);
 
+  if (isLoading) {
+    return <div style={{ padding: '40px', textAlign: 'center' }}>Carregando sistema Komanda...</div>;
+  }
+
   return (
-    <div className={`${fontSizeClass} ${highContrast ? 'high-contrast-mode' : ''}`} style={{ minHeight: '100vh', padding: '20px 16px' }}>
-      <div style={{ maxWidth: '1240px', margin: '0 auto' }}>
+    <div className={`${fontSizeClass} ${highContrast ? 'high-contrast-mode' : ''}`} style={{ minHeight: '100vh', padding: '16px' }}>
+      <div style={{ maxWidth: '1260px', margin: '0 auto' }}>
         
-        {/* BARRA DE ACESSIBILIDADE E MODO SÊNIOR NO TOPO */}
+        {/* BARRA DE ACESSIBILIDADE E AJUSTES VISUAIS */}
         <AccessibilityBar 
           fontSize={fontSize}
           setFontSize={setFontSize}
@@ -181,7 +225,7 @@ export default function App() {
           setSeniorGuide={setSeniorGuide}
         />
 
-        {/* FEEDBACK VISUAL RÁPIDO (TOAST) */}
+        {/* NOTIFICAÇÃO VISUAL TOAST */}
         {notification && (
           <div style={{
             background: highContrast ? '#facc15' : '#0f172a',
@@ -202,7 +246,7 @@ export default function App() {
           </div>
         )}
 
-        {/* GUIA PASSO A PASSO PARA IDOSOS / INICIANTES */}
+        {/* GUIA DE DICAS VISUAIS PARA IDOSOS / INICIANTES */}
         {seniorGuide && (
           <SeniorGuideBanner 
             highContrast={highContrast} 
@@ -210,22 +254,24 @@ export default function App() {
           />
         )}
 
-        {/* CABEÇALHO DO RESTAURANTE */}
+        {/* TOPO COM LOGO E BOTÃO DE NOVO PRATO */}
         <header style={{
           background: '#ffffff',
           border: highContrast ? '2px solid #000000' : '1px solid #e2e8f0',
           borderRadius: '12px',
-          padding: '18px 24px',
+          padding: '16px 20px',
           display: 'flex',
+          flexWrap: 'wrap',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '20px',
+          gap: '12px',
+          marginBottom: '16px',
           boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <div style={{
-              width: '48px',
-              height: '48px',
+              width: '44px',
+              height: '44px',
               borderRadius: '8px',
               background: highContrast ? '#000000' : '#0f172a',
               color: highContrast ? '#facc15' : '#ffffff',
@@ -233,15 +279,14 @@ export default function App() {
               alignItems: 'center',
               justifyContent: 'center',
               fontWeight: '800',
-              fontSize: '16px',
-              border: highContrast ? '2px solid #facc15' : 'none'
+              fontSize: '15px'
             }}>
               MM
             </div>
 
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <h1 style={{ fontSize: '1.4em', fontWeight: '800', color: '#0f172a' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h1 style={{ fontSize: '1.35em', fontWeight: '800', color: '#0f172a' }}>
                   Mau Mau Lanches
                 </h1>
                 <span style={{ 
@@ -252,37 +297,57 @@ export default function App() {
                   borderRadius: '6px',
                   fontWeight: '600'
                 }}>
-                  Sistema Komanda · Estilo iFood
+                  Komanda · Modelo iFood
                 </span>
               </div>
-              <p style={{ fontSize: '0.85em', color: '#64748b', marginTop: '2px' }}>
+              <p style={{ fontSize: '0.85em', color: '#64748b' }}>
                 Rua Vinte de Setembro, 1151 · Parque 35, Guaíba - RS
               </p>
             </div>
           </div>
 
-          {/* Tempo Médio de Entrega Editável */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ textAlign: 'right' }}>
-              <span style={{ fontSize: '0.8em', color: '#64748b', display: 'block' }}>Tempo Estimado</span>
-              <span style={{ fontSize: '1.1em', fontWeight: '700', color: '#0f172a' }}>{deliveryTime}</span>
-            </div>
-            <button 
-              onClick={() => {
-                const n = prompt('Novo tempo médio de entrega:', deliveryTime);
-                if (n) setDeliveryTime(n);
-              }}
-              style={{ 
-                background: '#f1f5f9', 
-                color: '#334155', 
-                border: '1px solid #cbd5e1', 
-                padding: '8px 12px', 
-                borderRadius: '6px',
-                fontSize: '0.85em',
-                fontWeight: '600'
+          {/* Botões Rápidos do Cabeçalho */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button
+              onClick={() => handleOpenAddProduct(2)}
+              style={{
+                background: highContrast ? '#000000' : '#15803d',
+                color: highContrast ? '#facc15' : '#ffffff',
+                border: highContrast ? '2px solid #facc15' : 'none',
+                padding: '10px 16px',
+                borderRadius: '8px',
+                fontWeight: '800',
+                fontSize: '0.95em',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(21, 128, 61, 0.2)'
               }}
             >
-              Editar
+              <PlusCircle size={18} />
+              <span>+ Criar Novo Prato</span>
+            </button>
+
+            <button
+              onClick={handleResetDefaults}
+              title="Restaurar lanches padrão"
+              style={{
+                background: '#f1f5f9',
+                color: '#64748b',
+                border: '1px solid #cbd5e1',
+                padding: '10px',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                fontSize: '0.8em',
+                fontWeight: '600',
+                cursor: 'pointer'
+              }}
+            >
+              <RotateCcw size={14} />
+              <span>Restaurar Padrão</span>
             </button>
           </div>
         </header>
@@ -293,14 +358,14 @@ export default function App() {
           gap: '8px', 
           marginBottom: '20px', 
           borderBottom: '2px solid #e2e8f0', 
-          paddingBottom: '10px',
+          paddingBottom: '8px',
           overflowX: 'auto'
         }}>
           {[
-            { id: 'cardapio', label: '🍔 Cardápio & Pedidos (iFood)', icon: UtensilsCrossed },
-            { id: 'estoque', label: '📦 Estoque de Insumos', icon: Boxes },
-            { id: 'motoboy', label: '🛵 Fechamento Motoboys', icon: Bike },
-            { id: 'caixa', label: '📊 Dashboard & Vendas', icon: BarChart3 }
+            { id: 'cardapio', label: '🍔 Cardápio & Pedidos (iFood)' },
+            { id: 'estoque', label: '🥩 Controle de Estoque & Carnes' },
+            { id: 'motoboy', label: '🛵 Fechamento Motoboys' },
+            { id: 'caixa', label: '📊 Dashboard & Vendas' }
           ].map(t => {
             const isActive = activeTab === t.id;
             return (
@@ -319,13 +384,10 @@ export default function App() {
                     ? (highContrast ? '#facc15' : '#ffffff') 
                     : '#64748b',
                   border: isActive && highContrast ? '2px solid #facc15' : 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
                   whiteSpace: 'nowrap'
                 }}
               >
-                <span>{t.label}</span>
+                {t.label}
               </button>
             );
           })}
@@ -337,7 +399,7 @@ export default function App() {
         {activeTab === 'cardapio' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.8fr) minmax(320px, 1fr)', gap: '20px', alignItems: 'start' }}>
             
-            {/* COLUNA ESQUERDA: CATEGORIAS E PRODUTOS (COM TOGGLE E DUPLICAR) */}
+            {/* LADO ESQUERDO: SEÇÕES DO CARDÁPIO */}
             <div>
               {categories.map(cat => {
                 const catProducts = products.filter(p => p.catId === cat.id);
@@ -350,6 +412,11 @@ export default function App() {
                     onSelectProduct={(p) => setSelectedProductForModal(p)}
                     onToggleProduct={handleToggleProduct}
                     onDuplicateProduct={handleDuplicateProduct}
+                    onEditProduct={(p) => {
+                      setIsCreatingProduct(false);
+                      setEditingProduct(p);
+                    }}
+                    onAddNewProduct={(catId) => handleOpenAddProduct(catId)}
                     highContrast={highContrast}
                     fontSizeClass={fontSizeClass}
                   />
@@ -357,7 +424,7 @@ export default function App() {
               })}
             </div>
 
-            {/* COLUNA DIREITA: COMANDA / CARRINHO FIXO DO PEDIDO */}
+            {/* LADO DIREITO: COMANDA / CARRINHO FIXO */}
             <OrderSummary
               orderItems={orderItems}
               onRemoveItem={handleRemoveItem}
@@ -381,43 +448,91 @@ export default function App() {
         )}
 
         {/* ============================================================== */}
-        {/* 2. ABA DE ESTOQUE                                             */}
+        {/* 2. ABA DE ESTOQUE DE CARNES E PRODUTOS                        */}
         {/* ============================================================== */}
         {activeTab === 'estoque' && (
           <div style={{ background: '#ffffff', border: highContrast ? '2px solid #000' : '1px solid #e2e8f0', borderRadius: '12px', padding: '20px' }}>
-            <h2 style={{ fontSize: '1.25em', fontWeight: '800', marginBottom: '12px' }}>Insumos em Estoque da Lancheria</h2>
-            <p style={{ fontSize: '0.9em', color: '#64748b', marginBottom: '16px' }}>
-              Saldo monitorado em tempo real. Itens abaixo do estoque mínimo acendem o alerta de reposição.
-            </p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <div>
+                <h2 style={{ fontSize: '1.25em', fontWeight: '800' }}>Controle de Vendas por Estoque Disponível</h2>
+                <p style={{ fontSize: '0.9em', color: '#64748b' }}>
+                  Quando a carne ou porção acaba (saldo 0), o lanche é pausado automaticamente para evitar vender o que não tem.
+                </p>
+              </div>
+            </div>
+
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.95em' }}>
               <thead>
                 <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0', color: '#475569' }}>
-                  <th style={{ padding: '10px' }}>Insumo</th>
-                  <th style={{ padding: '10px' }}>Unidade</th>
-                  <th style={{ padding: '10px' }}>Saldo Atual</th>
-                  <th style={{ padding: '10px' }}>Mínimo</th>
+                  <th style={{ padding: '10px' }}>Prato / Lanche</th>
+                  <th style={{ padding: '10px' }}>Categoria</th>
+                  <th style={{ padding: '10px' }}>Porções Restantes Hoje</th>
                   <th style={{ padding: '10px' }}>Situação</th>
+                  <th style={{ padding: '10px' }}>Ações Rápidas</th>
                 </tr>
               </thead>
               <tbody>
-                {inventory.map(i => {
-                  const isLow = i.current <= i.min;
+                {products.map(p => {
+                  const isOut = p.stockQuantity !== undefined && p.stockQuantity === 0;
                   return (
-                    <tr key={i.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                      <td style={{ padding: '12px 10px', fontWeight: '600' }}>{i.name}</td>
-                      <td style={{ padding: '12px 10px', color: '#64748b' }}>{i.unit}</td>
-                      <td style={{ padding: '12px 10px', fontWeight: '800' }}>{i.current} {i.unit}</td>
-                      <td style={{ padding: '12px 10px', color: '#64748b' }}>{i.min} {i.unit}</td>
+                    <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                      <td style={{ padding: '12px 10px', fontWeight: '700' }}>{p.name}</td>
+                      <td style={{ padding: '12px 10px', color: '#64748b' }}>
+                        {categories.find(c => c.id === p.catId)?.name}
+                      </td>
+                      <td style={{ padding: '12px 10px', fontWeight: '800' }}>
+                        {p.stockQuantity !== undefined ? `${p.stockQuantity} porções` : 'Ilimitado'}
+                      </td>
                       <td style={{ padding: '12px 10px' }}>
-                        {isLow ? (
+                        {isOut ? (
                           <span style={{ color: '#b91c1c', fontSize: '0.85em', fontWeight: '800', background: '#fee2e2', padding: '4px 8px', borderRadius: '6px' }}>
-                            ⚠ REPOR ESTOQUE
+                            🔴 ESGOTADO (Acabou carne)
+                          </span>
+                        ) : !p.active ? (
+                          <span style={{ color: '#64748b', fontSize: '0.85em', fontWeight: '700', background: '#f1f5f9', padding: '4px 8px', borderRadius: '6px' }}>
+                            Pausado
                           </span>
                         ) : (
                           <span style={{ color: '#15803d', fontSize: '0.85em', fontWeight: '700', background: '#dcfce7', padding: '4px 8px', borderRadius: '6px' }}>
-                            ✓ SALDO OK
+                            🟢 Venda Liberada
                           </span>
                         )}
+                      </td>
+                      <td style={{ padding: '12px 10px' }}>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <button
+                            onClick={() => {
+                              const q = prompt(`Nova quantidade disponível hoje para "${p.name}":`, p.stockQuantity || 10);
+                              if (q !== null) {
+                                api.updateProduct(p.id, { stockQuantity: parseInt(q, 10) || 0, active: parseInt(q, 10) > 0 }).then(setProducts);
+                              }
+                            }}
+                            style={{
+                              background: '#f1f5f9',
+                              border: '1px solid #cbd5e1',
+                              padding: '4px 8px',
+                              borderRadius: '4px',
+                              fontSize: '0.8em',
+                              fontWeight: '600'
+                            }}
+                          >
+                            Ajustar Qtd
+                          </button>
+                          <button
+                            onClick={() => handleToggleProduct(p.id)}
+                            style={{
+                              background: p.active ? '#fee2e2' : '#dcfce7',
+                              color: p.active ? '#b91c1c' : '#15803d',
+                              border: 'none',
+                              padding: '4px 8px',
+                              borderRadius: '4px',
+                              fontSize: '0.8em',
+                              fontWeight: '700'
+                            }}
+                          >
+                            {p.active ? 'Pausar' : 'Liberar'}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -432,21 +547,23 @@ export default function App() {
         {/* ============================================================== */}
         {activeTab === 'motoboy' && (
           <div style={{ background: '#ffffff', border: highContrast ? '2px solid #000' : '1px solid #e2e8f0', borderRadius: '12px', padding: '20px' }}>
-            <h2 style={{ fontSize: '1.25em', fontWeight: '800', marginBottom: '4px' }}>Acerto dos Motoboys da Noite</h2>
+            <h2 style={{ fontSize: '1.25em', fontWeight: '800', marginBottom: '4px' }}>Acerto dos Motoboys</h2>
             <p style={{ fontSize: '0.9em', color: '#64748b', marginBottom: '16px' }}>
-              Cálculo automático: Diária fixa da noite (R$ 40,00) + soma das taxas dos bairros atendidos.
+              Diária fixa da noite (R$ 40,00) + taxa integral dos bairros atendidos.
             </p>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
-              {motoboys.map(m => (
-                <div key={m.id} style={{ border: highContrast ? '2px solid #000' : '1px solid #e2e8f0', borderRadius: '10px', padding: '16px', background: '#fafafa' }}>
-                  <h3 style={{ fontSize: '1.1em', fontWeight: '800', marginBottom: '10px', color: '#0f172a' }}>{m.name}</h3>
-                  <div style={{ fontSize: '0.95em', color: '#334155', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <div>Diária fixa: <strong>R$ {m.baseFee.toFixed(2)}</strong></div>
-                    <div>Entregas realizadas: <strong>{m.deliveries} viagens</strong></div>
-                    <div>Total acumulado de taxas: <strong>R$ {m.deliveryFeesTotal.toFixed(2)}</strong></div>
-                    <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '2px solid #e2e8f0', fontSize: '1.15em', fontWeight: '900', color: highContrast ? '#000000' : '#059669' }}>
-                      Total a Pagar ao Motoboy: R$ {(m.baseFee + m.deliveryFeesTotal).toFixed(2)}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+              {[
+                { name: 'Cleber Ribeiro', base: 40, trips: 4, fees: 26 },
+                { name: 'Rodrigo Silveira', base: 40, trips: 3, fees: 21 }
+              ].map((m, idx) => (
+                <div key={idx} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px', background: '#fafafa' }}>
+                  <h3 style={{ fontSize: '1.1em', fontWeight: '800', marginBottom: '8px' }}>{m.name}</h3>
+                  <div style={{ fontSize: '0.9em', color: '#475569', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div>Diária: R$ {m.base.toFixed(2)}</div>
+                    <div>Entregas: {m.trips} viagens</div>
+                    <div>Taxas de entrega: R$ {m.fees.toFixed(2)}</div>
+                    <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #e2e8f0', fontWeight: '800', fontSize: '1.1em', color: '#059669' }}>
+                      A pagar: R$ {(m.base + m.fees).toFixed(2)}
                     </div>
                   </div>
                 </div>
@@ -456,89 +573,53 @@ export default function App() {
         )}
 
         {/* ============================================================== */}
-        {/* 4. ABA DE DASHBOARD & VENDAS                                  */}
+        {/* 4. ABA DE DASHBOARD                                           */}
         {/* ============================================================== */}
         {activeTab === 'caixa' && (
           <div>
-            <div style={{ background: '#ffffff', border: highContrast ? '2px solid #000' : '1px solid #e2e8f0', borderRadius: '12px', padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <span style={{ fontSize: '1.05em', fontWeight: '800' }}>Relatório Consolidado de Vendas</span>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                {[
-                  { id: 'hoje', label: 'Hoje' },
-                  { id: 'ontem', label: 'Ontem' },
-                  { id: '7dias', label: 'Últimos 7 dias' }
-                ].map(b => (
-                  <button
-                    key={b.id}
-                    onClick={() => setDashPeriod(b.id)}
-                    style={{
-                      padding: '6px 12px',
-                      borderRadius: '6px',
-                      fontWeight: '700',
-                      background: dashPeriod === b.id ? '#0f172a' : '#f1f5f9',
-                      color: dashPeriod === b.id ? '#ffffff' : '#64748b'
-                    }}
-                  >
-                    {b.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Cards de Métricas */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', marginBottom: '20px' }}>
-              <div style={{ background: '#ffffff', border: highContrast ? '2px solid #000' : '1px solid #e2e8f0', borderRadius: '10px', padding: '16px' }}>
-                <div style={{ fontSize: '0.85em', color: '#64748b', fontWeight: '600' }}>Faturamento Total</div>
-                <div style={{ fontSize: '1.6em', fontWeight: '900', color: highContrast ? '#000000' : '#059669', marginTop: '4px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', marginBottom: '16px' }}>
+              <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px' }}>
+                <div style={{ fontSize: '0.85em', color: '#64748b' }}>Faturamento Total</div>
+                <div style={{ fontSize: '1.6em', fontWeight: '900', color: '#059669', marginTop: '4px' }}>
                   R$ {totalRevenue.toFixed(2)}
                 </div>
               </div>
-
-              <div style={{ background: '#ffffff', border: highContrast ? '2px solid #000' : '1px solid #e2e8f0', borderRadius: '10px', padding: '16px' }}>
-                <div style={{ fontSize: '0.85em', color: '#64748b', fontWeight: '600' }}>Total de Pedidos</div>
+              <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px' }}>
+                <div style={{ fontSize: '0.85em', color: '#64748b' }}>Pedidos Realizados</div>
                 <div style={{ fontSize: '1.6em', fontWeight: '900', color: '#0f172a', marginTop: '4px' }}>
                   {closedOrders.length}
                 </div>
               </div>
-
-              <div style={{ background: '#ffffff', border: highContrast ? '2px solid #000' : '1px solid #e2e8f0', borderRadius: '10px', padding: '16px' }}>
-                <div style={{ fontSize: '0.85em', color: '#64748b', fontWeight: '600' }}>Ticket Médio</div>
+              <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px' }}>
+                <div style={{ fontSize: '0.85em', color: '#64748b' }}>Ticket Médio</div>
                 <div style={{ fontSize: '1.6em', fontWeight: '900', color: '#0f172a', marginTop: '4px' }}>
                   R$ {(totalRevenue / (closedOrders.length || 1)).toFixed(2)}
                 </div>
               </div>
-
-              <div style={{ background: '#ffffff', border: highContrast ? '2px solid #000' : '1px solid #e2e8f0', borderRadius: '10px', padding: '16px' }}>
-                <div style={{ fontSize: '0.85em', color: '#64748b', fontWeight: '600' }}>Campeão de Vendas</div>
-                <div style={{ fontSize: '1.1em', fontWeight: '800', color: '#0f172a', marginTop: '6px' }}>
-                  Xis Salada Tradicional
-                </div>
-              </div>
             </div>
 
-            {/* Extrato dos Pedidos Fechados */}
-            <div style={{ background: '#ffffff', border: highContrast ? '2px solid #000' : '1px solid #e2e8f0', borderRadius: '12px', padding: '20px' }}>
-              <h3 style={{ fontSize: '1.15em', fontWeight: '800', marginBottom: '14px' }}>Extrato Detalhado de Pedidos</h3>
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '16px' }}>
+              <h3 style={{ fontSize: '1.1em', fontWeight: '800', marginBottom: '10px' }}>Histórico dos Pedidos</h3>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9em' }}>
                 <thead>
-                  <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0', color: '#475569' }}>
-                    <th style={{ padding: '10px' }}># Comanda</th>
-                    <th style={{ padding: '10px' }}>Horário</th>
-                    <th style={{ padding: '10px' }}>Tipo</th>
-                    <th style={{ padding: '10px' }}>Itens</th>
-                    <th style={{ padding: '10px' }}>Pagamento</th>
-                    <th style={{ padding: '10px' }}>Total</th>
+                  <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#64748b' }}>
+                    <th style={{ padding: '8px' }}>#</th>
+                    <th style={{ padding: '8px' }}>Hora</th>
+                    <th style={{ padding: '8px' }}>Tipo</th>
+                    <th style={{ padding: '8px' }}>Itens</th>
+                    <th style={{ padding: '8px' }}>Pgto</th>
+                    <th style={{ padding: '8px' }}>Total</th>
                   </tr>
                 </thead>
                 <tbody>
                   {closedOrders.map(o => (
-                    <tr key={o.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                      <td style={{ padding: '12px 10px', fontWeight: '800' }}>#{o.id}</td>
-                      <td style={{ padding: '12px 10px', color: '#64748b' }}>{o.date} às {o.time}</td>
-                      <td style={{ padding: '12px 10px' }}>{o.type}</td>
-                      <td style={{ padding: '12px 10px' }}>{o.items}</td>
-                      <td style={{ padding: '12px 10px', color: '#475569' }}>{o.payment}</td>
-                      <td style={{ padding: '12px 10px', fontWeight: '800' }}>R$ {o.total.toFixed(2)}</td>
+                    <tr key={o.id} style={{ borderBottom: '1px solid #f8fafc' }}>
+                      <td style={{ padding: '8px', fontWeight: '700' }}>#{o.id}</td>
+                      <td style={{ padding: '8px', color: '#64748b' }}>{o.time}</td>
+                      <td style={{ padding: '8px' }}>{o.type}</td>
+                      <td style={{ padding: '8px' }}>{o.items}</td>
+                      <td style={{ padding: '8px', color: '#64748b' }}>{o.payment}</td>
+                      <td style={{ padding: '8px', fontWeight: '700' }}>R$ {o.total.toFixed(2)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -547,12 +628,29 @@ export default function App() {
           </div>
         )}
 
-        {/* MODAL ESTILO IFOOD PARA PERSONALIZAR LANCHE */}
+        {/* MODAL 1: PERSONALIZAR LANCHE (ESTILO IFOOD) */}
         {selectedProductForModal && (
           <ProductModal
             product={selectedProductForModal}
             onClose={() => setSelectedProductForModal(null)}
             onConfirm={handleConfirmItemToOrder}
+            highContrast={highContrast}
+            fontSizeClass={fontSizeClass}
+          />
+        )}
+
+        {/* MODAL 2: CRIAR / EDITAR / EXCLUIR / SALVAR COMO NOVO PRATO */}
+        {(editingProduct || isCreatingProduct) && (
+          <ProductEditModal
+            product={isCreatingProduct ? null : editingProduct}
+            categories={categories}
+            onClose={() => {
+              setEditingProduct(null);
+              setIsCreatingProduct(false);
+            }}
+            onSave={handleSaveProduct}
+            onSaveAsNew={handleSaveAsNewProduct}
+            onDelete={handleDeleteProduct}
             highContrast={highContrast}
             fontSizeClass={fontSizeClass}
           />
